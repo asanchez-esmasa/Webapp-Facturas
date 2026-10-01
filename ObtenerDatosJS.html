@@ -1,0 +1,238 @@
+
+
+<!-- Funciones de las promesas -->
+<script>
+  // --- Función genérica para reducir repetición ---
+  function ejecutarServidor(funcion, ...args) {
+    nProcesos++;
+    comprobarNprocesos('textoNotificacion', 'Nº Solicitudes de datos: ' + nProcesos);
+
+    return new Promise((resolve, reject) => {
+      google.script.run
+        .withSuccessHandler((value) => {
+          nProcesos--;
+          comprobarNprocesos('textoNotificacion', 'Nº Solicitudes de datos: ' + nProcesos);
+          console.log(`Éxito en ${funcion}`);
+          resolve(value);
+        })
+        .withFailureHandler((err) => {
+          nProcesos--;
+          comprobarNprocesos('textoNotificacion', 'Nº Solicitudes de datos: ' + nProcesos);
+          console.error(`Error en ${funcion}`, err);
+          reject(err);
+        })
+        [funcion](...args);
+    });
+  }
+
+  // --- Adaptaciones de tus funciones existentes ---
+  function obtenerUsuarios() {
+    return ejecutarServidor('usuariosDatosLimitados');
+  }
+
+  function obtenerDatos(variable) {
+    if (variable.length == 2){
+      return ejecutarServidor('obtenerDatosTabla', variable, true);
+    }else if (variable.length == 3){
+      return ejecutarServidor('obtenerDatosTablaBQ', variable, true);
+    }
+      
+  }
+
+  function obtenerExpedientesDisponibles(variable) {
+    return ejecutarServidor('obtenerExpedientesDisponibles_gs', variable)
+      .then((value) => JSON.parse(value));
+  }
+
+  function obtenerCuentaContable6Promesa() {
+    return ejecutarServidor('obtenerCuentaContable').then((value) => {
+      // Transformar array de objetos en array de strings para mantener compatibilidad
+      const cuentas = value.map(c => `${c.AnaCodigoCuenta} - ${c.Cuenta}`); // o `${c.AnaCodigoCuenta} - ${c.Cuenta}` si quieres mostrar código también
+      cuentaCorrienteGlobal = cuentas;
+      return cuentas;
+    });
+  }
+
+  // --- Funciones auxiliares optimizadas ---
+  function inicializarUsuarios(usuariosRes) {
+    const datalist2 = document.getElementById("datalistoptions2");
+    usuarios = usuariosRes;
+
+    if (datalist2) {
+      const fragment = document.createDocumentFragment();
+      const len = usuariosRes.length;
+      for (let i = 0; i < len; i++) {
+        const nombre = obtenerNombreUsuario(usuariosRes[i][2]);
+        const option = document.createElement("option");
+        option.value = nombre;
+        fragment.appendChild(option);
+      }
+
+      datalist2.appendChild(fragment);
+      mostrarOcultarElemento('idLoadUsuarios', 'idLabelUsuarios', 'selectUsuario');
+    }
+  }
+
+  function inicializarExpedientes(expedientesDisponibles) {
+    const datalist1 = document.getElementById("datalistoptions1");
+
+    const data = expedientesDisponibles[0];
+    infoCM = data.cm;
+    infoLI = data.li;
+    infoNG = data.ng;
+    infoCMA = data.cm_ant;
+
+    datosCombinados = Object.assign({}, infoCM, infoLI, infoNG);
+    const identificadores = Object.keys(datosCombinados);
+    identificadores.push('Sin contrato');
+
+    objetoControlGS = expedientesDisponibles;
+    arrayExpedientesDisponibles = identificadores;
+
+    if (datalist1) {
+      const fragment = document.createDocumentFragment();
+      for (let i = 0, len = identificadores.length; i < len; i++) {
+        const option = document.createElement("option");
+        option.value = identificadores[i];
+        fragment.appendChild(option);
+      }
+      datalist1.appendChild(fragment);
+      mostrarOcultarElemento('idLoadNexpediente', 'idLabelNexpediente', 'selectNexpediente');
+    }
+  }
+
+  // --- Inicialización diferida de DataTables ---
+  function inicializarTablasDiferido(facturasPrimera) {
+    // Esperamos un poco para asegurar que el DOM esté completamente listo
+    setTimeout(() => {
+      if ($('#tablaControlSolicitudFirma').length && $('#tablaContabilizar').length) {
+        actualizarTablasFacturas(facturasPrimera);
+        console.log('✅ Tablas inicializadas de forma diferida');
+      } else {
+        console.warn('⏳ Aún no existen las tablas, reintentando...');
+        setTimeout(() => inicializarTablasDiferido(facturasPrimera), 300);
+      }
+    }, 200);
+  }
+
+  function inicializarFacturasYAlbaranes(facturasRes, albaranesRes) {
+    const facturasPrimera = facturasRes;
+    const len = facturasRes.length;
+    const facturas = [];
+    for (let i = 1; i < len; i++) {
+      const enlace = facturasRes[i][12];
+      if (enlace && !enlace.includes("Aun sin firmar")) facturas.push(enlace);
+    }
+
+    arrayFacturas = facturas;
+    albaranes = albaranesRes;
+
+    const $tablaFirma = $('#tablaControlSolicitudFirma');
+    const $tablaConta = $('#tablaContabilizar');
+
+    $tablaFirma.off('click').on('click', '#btnRevisarFactura', function() {
+      const datos = $tablaFirma.DataTable().row($(this).closest('tr')).data();
+      if (datosCombinados && Object.keys(datosCombinados).length > 0) abrirModalAdjuntarFactura(datos);
+      else generarAviso('¡Faltan datos por cargar!', 'error', false, false, 'Información de los expedientes disponibles');
+    });
+
+    $tablaConta.off('click').on('click', '#btnContabilizar', function() {
+      const datos = $tablaConta.DataTable().row($(this).closest('tr')).data();
+      if (datos[10] === "Firmado" && cuentaCorrienteGlobal && cuentaCorrienteGlobal.length > 0) {
+        abrirModalContabilizar(datos);
+      } else if (datos[10] !== "Firmado") {
+        if(typeof cuentaCorrienteGlobal != "undefined"){
+          abrirModalContabilizar(datos)
+        }else{
+          generarAviso('¡Falta Cuenta Corriente 6 por cargar!','error',false,false,'Estado de la factura')
+        }
+      } else {
+        generarAviso('¡Falta Cuenta Corriente 6 por cargar!', 'error', false, false, 'Información de los expedientes disponibles');
+      }
+
+    });
+    /*
+    $tablaConta.on('click', '#btnInfoProveedorF', function() {
+      const datos = $tablaConta.DataTable().row($(this).closest('tr')).data();
+      abrirModalInfoProveedor(datos);
+    });*/
+
+    $tablaFirma.on('click', '#btnInfoProveedorS', function() {
+      const datos = $tablaFirma.DataTable().row($(this).closest('tr')).data();
+      abrirModalInfoProveedor(datos);
+    });
+
+    // Cargar las DataTables de forma diferida (más fluido y no bloqueante)
+    inicializarTablasDiferido(facturasPrimera);
+  }
+</script>
+
+<!-- Ejecución al cargar -->
+<script>
+$(document).ready(function() {
+  console.log("🚀 Inicio de carga de datos...");
+
+  // 👇 Inyectamos el JSON del servidor directamente como string literal
+  const usuarioJSON = usuarioString;
+
+  // 👇 Convertimos en objeto de JS
+  let usuarioActivo = [];
+  try {
+    usuarioActivo = JSON.parse(usuarioJSON);
+  } catch (e) {
+    console.error("Error al parsear usuarioJSON:", e, usuarioJSON);
+  }
+
+  console.log("usuario activo:", usuarioActivo);
+  const correoUsuario = usuarioActivo?.[2] || "";
+  console.log("correo usuario:", correoUsuario);
+
+  const usuariosConCuenta6 = [
+    "z.alonso@esmasalcorcon.com",
+    "j.contador@esmasalcorcon.com",
+    "a.sanz@esmasalcorcon.com",
+    "a.sanchez@esmasalcorcon.com",
+    "d.gonzalez@esmasalcorcon.com",
+    "d.fernandez@esmasalcorcon.com",
+    "practconta@esmasalcorcon.com",
+    "j.rochet@esmasalcorcon.com",
+    "j.ortega@esmasalcorcon.com",
+  ];
+
+  const puedeCargarCuenta6 = usuariosConCuenta6.includes(correoUsuario);
+
+  // 🔹 Promesas base (todos los usuarios)
+  const promesaUsuarios = obtenerUsuarios();
+  const promesaFacturas = obtenerDatos(datosFirma1);
+  const promesaAlbaranes = obtenerDatos(datosAlbaranes);
+  const promesaExpedientes = obtenerExpedientesDisponibles(datosFirma1);
+  // 🔹 Promesas condicionales
+  const promesaCuenta = puedeCargarCuenta6
+    ? obtenerCuentaContable6Promesa()
+    : Promise.resolve([]); // devuelve array vacío si no tiene permiso
+
+  // 🔹 Ejecución de todas las promesas
+  Promise.all([promesaUsuarios, promesaCuenta, promesaFacturas, promesaAlbaranes, promesaExpedientes])
+    .then(([usuariosRes, cuentaRes, facturasRes, albaranesRes, expedientesDisponibles]) => {
+      console.log("✅ Datos recibidos correctamente");
+
+      inicializarUsuarios(usuariosRes);
+      inicializarExpedientes(expedientesDisponibles);
+
+      if (puedeCargarCuenta6) {
+        console.log("🟢 Cuenta contable 6 cargada para:", correoUsuario);
+      } else {
+        console.log("⚪ Usuario sin permiso para cuenta 6:", correoUsuario);
+      }
+
+      inicializarFacturasYAlbaranes(facturasRes, albaranesRes);
+    })
+    .catch((error) => {
+      console.error('❌ Error al cargar datos iniciales:', error);
+      generarAviso('Error al cargar datos iniciales', 'error', false, false, 'Carga inicial');
+    });
+  });
+
+</script>
+
+

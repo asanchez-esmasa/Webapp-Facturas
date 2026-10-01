@@ -1,0 +1,1554 @@
+<!----Loader carga modales bloques en line recta que re mueven y ordenan y un titulo--->
+<style>
+  .classCursorPointer{
+    cursor: pointer;
+  }
+  /* //estilos divs tabla
+  .divpadretabla {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .divtituloytabla {
+    width: 90%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .divTabla {
+    width: 100%;
+  }
+  .divtitulotabla {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .divloaderyactualizador {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .titulotabla {
+    font-weight: bold;
+    margin-top: 15px;
+    background-color: #2B4162;
+    padding: 15px;
+    border: 5px #5c7195 solid;
+    border-radius: 33px;
+    color: white;
+  }
+
+  .tituloactualizaciontabla {
+    color: #c3c3c3;
+    margin: 0px;
+    font-size: 18px;
+  }
+
+  //estilos tabla
+  .estiloTablas th {
+    background-color: #2B4162;
+    color: #ffffff;
+    //background-color: #01735abd;
+  } */
+
+
+  #modalContenidoConfirmacionFirmaFactura{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+  }
+
+  .modal.modal-fixed-footer .modal-footer {
+      border-top: 1px solid rgba(0, 0, 0, 0.1);
+      position: fixed;
+      bottom: 0;
+  }
+
+  .cssContenedorImg {
+    border: 2px dashed #ccc; /* Borde punteado gris */
+    padding: 20px; /* Espaciado interior */
+    text-align: center; /* Centrar texto */
+}
+
+.dropzone {
+    background-color: #f0f0f0; /* Color de fondo */
+}
+
+.dragover {
+    border-color: #ff0000; /* Cambiar color del borde cuando se arrastra un archivo */
+}
+  /* #carousel-container {
+      width: 100%;
+    } */
+
+    /* #iframe-container {
+      display: flex;
+      //transition: transform 0.5s ease-in-out;
+    } */
+
+    /* iframe {
+      width: 100%;
+      height: 300px;
+      border: 1px solid #ddd;
+    } */
+
+    #prev, #next {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    #prev {
+      left: 10px;
+    }
+
+    #next {
+      right: 10px;
+    }
+
+    #counter {
+
+    }
+</style>
+<style>
+    #swal2-select {
+    display: none !important;
+  }
+  .loadingspinner {
+    --square: 36px;
+    --offset: 40px;
+    --duration: 2.4s;
+    --delay: 0.2s;
+    --timing-function: ease-in-out;
+    --in-duration: 0.4s;
+    --in-delay: 0.1s;
+    --in-timing-function: ease-out;
+    width: calc(3 * var(--offset) + var(--square));
+    height: calc(2 * var(--offset) + var(--square));
+    padding: 0px;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 10px;
+    margin-bottom: 30px;
+    position: relative;
+  }
+
+  .loadingspinner div {
+    display: inline-block;
+    background: darkorange;
+    /*background: var(--text-color);*/
+    /*box-shadow: 1px 1px 1px rgba(0, 0, 0, 0.4);*/
+    border: none;
+    border-radius: 2px;
+    width: var(--square);
+    height: var(--square);
+    position: absolute;
+    padding: 0px;
+    margin: 0px;
+    font-size: 6pt;
+    color: black;
+  }
+
+  .loadingspinner #square1 {
+    left: calc(0 * var(--offset));
+    top: calc(0 * var(--offset));
+    animation: square1 var(--duration) var(--delay) var(--timing-function) infinite,
+      squarefadein var(--in-duration) calc(1 * var(--in-delay)) var(--in-timing-function) both;
+  }
+
+  .loadingspinner #square2 {
+    left: calc(0 * var(--offset));
+    top: calc(1 * var(--offset));
+    animation: square2 var(--duration) var(--delay) var(--timing-function) infinite,
+      squarefadein var(--in-duration) calc(1 * var(--in-delay)) var(--in-timing-function) both;
+  }
+
+  .loadingspinner #square3 {
+    left: calc(1 * var(--offset));
+    top: calc(1 * var(--offset));
+    animation: square3 var(--duration) var(--delay) var(--timing-function) infinite,
+      squarefadein var(--in-duration) calc(2 * var(--in-delay)) var(--in-timing-function) both;
+  }
+
+  .loadingspinner #square4 {
+    left: calc(2 * var(--offset));
+    top: calc(1 * var(--offset));
+    animation: square4 var(--duration) var(--delay) var(--timing-function) infinite,
+      squarefadein var(--in-duration) calc(3 * var(--in-delay)) var(--in-timing-function) both;
+  }
+
+  .loadingspinner #square5 {
+    left: calc(3 * var(--offset));
+    top: calc(1 * var(--offset));
+    animation: square5 var(--duration) var(--delay) var(--timing-function) infinite,
+      squarefadein var(--in-duration) calc(4 * var(--in-delay)) var(--in-timing-function) both;
+  }
+
+  @keyframes square1 {
+    0% {
+      left: calc(0 * var(--offset));
+      top: calc(0 * var(--offset));
+    }
+
+    8.333% {
+      left: calc(0 * var(--offset));
+      top: calc(1 * var(--offset));
+    }
+
+    100% {
+      left: calc(0 * var(--offset));
+      top: calc(1 * var(--offset));
+    }
+  }
+
+  @keyframes square2 {
+    0% {
+      left: calc(0 * var(--offset));
+      top: calc(1 * var(--offset));
+    }
+
+    8.333% {
+      left: calc(0 * var(--offset));
+      top: calc(2 * var(--offset));
+    }
+
+    16.67% {
+      left: calc(1 * var(--offset));
+      top: calc(2 * var(--offset));
+    }
+
+    25.00% {
+      left: calc(1 * var(--offset));
+      top: calc(1 * var(--offset));
+    }
+
+    83.33% {
+      left: calc(1 * var(--offset));
+      top: calc(1 * var(--offset));
+    }
+
+    91.67% {
+      left: calc(1 * var(--offset));
+      top: calc(0 * var(--offset));
+    }
+
+    100% {
+      left: calc(0 * var(--offset));
+      top: calc(0 * var(--offset));
+    }
+  }
+
+  @keyframes square3 {
+
+    0%,
+    100% {
+      left: calc(1 * var(--offset));
+      top: calc(1 * var(--offset));
+    }
+
+    16.67% {
+      left: calc(1 * var(--offset));
+      top: calc(1 * var(--offset));
+    }
+
+    25.00% {
+      left: calc(1 * var(--offset));
+      top: calc(0 * var(--offset));
+    }
+
+    33.33% {
+      left: calc(2 * var(--offset));
+      top: calc(0 * var(--offset));
+    }
+
+    41.67% {
+      left: calc(2 * var(--offset));
+      top: calc(1 * var(--offset));
+    }
+
+    66.67% {
+      left: calc(2 * var(--offset));
+      top: calc(1 * var(--offset));
+    }
+
+    75.00% {
+      left: calc(2 * var(--offset));
+      top: calc(2 * var(--offset));
+    }
+
+    83.33% {
+      left: calc(1 * var(--offset));
+      top: calc(2 * var(--offset));
+    }
+
+    91.67% {
+      left: calc(1 * var(--offset));
+      top: calc(1 * var(--offset));
+    }
+  }
+
+  @keyframes square4 {
+    0% {
+      left: calc(2 * var(--offset));
+      top: calc(1 * var(--offset));
+    }
+
+    33.33% {
+      left: calc(2 * var(--offset));
+      top: calc(1 * var(--offset));
+    }
+
+    41.67% {
+      left: calc(2 * var(--offset));
+      top: calc(2 * var(--offset));
+    }
+
+    50.00% {
+      left: calc(3 * var(--offset));
+      top: calc(2 * var(--offset));
+    }
+
+    58.33% {
+      left: calc(3 * var(--offset));
+      top: calc(1 * var(--offset));
+    }
+
+    100% {
+      left: calc(3 * var(--offset));
+      top: calc(1 * var(--offset));
+    }
+  }
+
+  @keyframes square5 {
+    0% {
+      left: calc(3 * var(--offset));
+      top: calc(1 * var(--offset));
+    }
+
+    50.00% {
+      left: calc(3 * var(--offset));
+      top: calc(1 * var(--offset));
+    }
+
+    58.33% {
+      left: calc(3 * var(--offset));
+      top: calc(0 * var(--offset));
+    }
+
+    66.67% {
+      left: calc(2 * var(--offset));
+      top: calc(0 * var(--offset));
+    }
+
+    75.00% {
+      left: calc(2 * var(--offset));
+      top: calc(1 * var(--offset));
+    }
+
+    100% {
+      left: calc(2 * var(--offset));
+      top: calc(1 * var(--offset));
+    }
+  }
+
+  @keyframes squarefadein {
+    0% {
+      transform: scale(0.75);
+      opacity: 0.0;
+    }
+
+    100% {
+      transform: scale(1.0);
+      opacity: 1.0;
+    }
+  }
+</style>
+<!-------------------------------Loader carga inicial de las tablas ------------------>
+<style>
+  html,
+  body {
+    height: 100%;
+    margin: 0;
+  }
+
+  .dt-buttons {
+    width: 100%;
+  }
+
+  .sinMargen {
+    margin: 0% !important;
+  }
+
+  #contenidoGeneral {    margin-bottom: 70px;}
+
+
+
+  #contenedorTablas {
+    height: 100%;
+    flex-direction: column;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  #contenedorTabla1 {}
+
+  #contenedorTabla2 {}
+
+  #contenedorTabla1,
+  #contenedorTabla2 {
+    //flex: 1;
+    /* Haz que las tablas ocupen todo el espacio disponible */
+    padding: 10px;
+    /* Ajusta el margen entre las tablas */
+  }
+
+  .separador {
+    margin-top: 80px !important;
+    height: 200px;
+    margin: 0 2%;
+    width: 2px;
+    background-color: #000;
+  }
+
+  .loaderPrincipal {
+    scale: 3;
+    height: 50px;
+    width: 40px;
+  }
+
+  .box {
+    position: relative;
+    opacity: 0;
+    left: 10px;
+  }
+
+  .side-left {
+    position: absolute;
+    background-color: #286cb5;
+    width: 19px;
+    height: 5px;
+    transform: skew(0deg, -25deg);
+    top: 14px;
+    left: 10px;
+  }
+
+  .side-right {
+    position: absolute;
+    background-color: #2f85e0;
+    width: 19px;
+    height: 5px;
+    transform: skew(0deg, 25deg);
+    top: 14px;
+    left: -9px;
+  }
+
+  .side-top {
+    position: absolute;
+    background-color: #5fa8f5;
+    width: 20px;
+    height: 20px;
+    rotate: 45deg;
+    transform: skew(-20deg, -20deg);
+  }
+
+  .box-1 {
+    animation: from-left 4s infinite;
+  }
+
+  .box-2 {
+    animation: from-right 4s infinite;
+    animation-delay: 1s;
+  }
+
+  .box-3 {
+    animation: from-left 4s infinite;
+    animation-delay: 2s;
+  }
+
+  .box-4 {
+    animation: from-right 4s infinite;
+    animation-delay: 3s;
+  }
+
+  @keyframes from-left {
+    0% {
+      z-index: 20;
+      opacity: 0;
+      translate: -20px -6px;
+    }
+
+    20% {
+      z-index: 10;
+      opacity: 1;
+      translate: 0px 0px;
+    }
+
+    40% {
+      z-index: 9;
+      translate: 0px 4px;
+    }
+
+    60% {
+      z-index: 8;
+      translate: 0px 8px;
+    }
+
+    80% {
+      z-index: 7;
+      opacity: 1;
+      translate: 0px 12px;
+    }
+
+    100% {
+      z-index: 5;
+      translate: 0px 30px;
+      opacity: 0;
+    }
+  }
+
+  @keyframes from-right {
+    0% {
+      z-index: 20;
+      opacity: 0;
+      translate: 20px -6px;
+    }
+
+    20% {
+      z-index: 10;
+      opacity: 1;
+      translate: 0px 0px;
+    }
+
+    40% {
+      z-index: 9;
+      translate: 0px 4px;
+    }
+
+    60% {
+      z-index: 8;
+      translate: 0px 8px;
+    }
+
+    80% {
+      z-index: 7;
+      opacity: 1;
+      translate: 0px 12px;
+    }
+
+    100% {
+      z-index: 5;
+      translate: 0px 30px;
+      opacity: 0;
+    }
+  }
+
+  //Permite crear ventanas emergentes con fondo oscuro
+  .carga {
+    z-index: 999;
+    width: 100%;
+    height: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #111111fc;
+    display: flex;
+    opacity: 1;
+    pointer-events: all;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+  }
+
+  .mostrarModal {
+    opacity: 1;
+    pointer-events: unset;
+  }
+
+  .modal-overlay {
+    opacity: 0.75 !important;
+  }
+</style>
+<!------------------------------------------Css Preload-------------------------------->
+<style>
+  #loader {
+    display: none;
+  }
+
+  #loader1 {
+    display: none;
+  }
+
+  .spinner {
+    --size: 30px;
+    --first-block-clr: #005f78;
+    --second-block-clr: #6A2181;
+    --clr: #111;
+    height: 100px;
+    position: relative;
+  }
+
+  .spinner::after,
+  .spinner::before {
+    box-sizing: border-box;
+    position: absolute;
+    content: "";
+    width: var(--size);
+    height: var(--size);
+    top: 50%;
+    animation: up 2.4s cubic-bezier(0, 0, 0.24, 1.21) infinite;
+    left: 50%;
+    background: var(--first-block-clr);
+  }
+
+  .spinner::after {
+    background: var(--second-block-clr);
+    top: calc(50% - var(--size));
+    left: calc(50% - var(--size));
+    animation: down 2.4s cubic-bezier(0, 0, 0.24, 1.21) infinite;
+  }
+
+  @keyframes down {
+
+    0%,
+    100% {
+      transform: none;
+    }
+
+    25% {
+      transform: translateX(100%);
+    }
+
+    50% {
+      transform: translateX(100%) translateY(100%);
+    }
+
+    75% {
+      transform: translateY(100%);
+    }
+  }
+
+  @keyframes up {
+
+    0%,
+    100% {
+      transform: none;
+    }
+
+    25% {
+      transform: translateX(-100%);
+    }
+
+    50% {
+      transform: translateX(-100%) translateY(-100%);
+    }
+
+    75% {
+      transform: translateY(-100%);
+    }
+  }
+</style>
+<!----Loader carga modales bloques en line recta que re mueven y ordenan y un titulo--->
+<style>
+  .loadingspinner {
+    --square: 36px;
+    --offset: 40px;
+    --duration: 2.4s;
+    --delay: 0.2s;
+    --timing-function: ease-in-out;
+    --in-duration: 0.4s;
+    --in-delay: 0.1s;
+    --in-timing-function: ease-out;
+    width: calc(3 * var(--offset) + var(--square));
+    height: calc(2 * var(--offset) + var(--square));
+    padding: 0px;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 10px;
+    margin-bottom: 30px;
+    position: relative;
+  }
+
+  .loadingspinner div {
+    display: inline-block;
+    background: darkorange;
+    /*background: var(--text-color);*/
+    /*box-shadow: 1px 1px 1px rgba(0, 0, 0, 0.4);*/
+    border: none;
+    border-radius: 2px;
+    width: var(--square);
+    height: var(--square);
+    position: absolute;
+    padding: 0px;
+    margin: 0px;
+    font-size: 6pt;
+    color: black;
+  }
+
+  .loadingspinner #square1 {
+    left: calc(0 * var(--offset));
+    top: calc(0 * var(--offset));
+    animation: square1 var(--duration) var(--delay) var(--timing-function) infinite,
+      squarefadein var(--in-duration) calc(1 * var(--in-delay)) var(--in-timing-function) both;
+  }
+
+  .loadingspinner #square2 {
+    left: calc(0 * var(--offset));
+    top: calc(1 * var(--offset));
+    animation: square2 var(--duration) var(--delay) var(--timing-function) infinite,
+      squarefadein var(--in-duration) calc(1 * var(--in-delay)) var(--in-timing-function) both;
+  }
+
+  .loadingspinner #square3 {
+    left: calc(1 * var(--offset));
+    top: calc(1 * var(--offset));
+    animation: square3 var(--duration) var(--delay) var(--timing-function) infinite,
+      squarefadein var(--in-duration) calc(2 * var(--in-delay)) var(--in-timing-function) both;
+  }
+
+  .loadingspinner #square4 {
+    left: calc(2 * var(--offset));
+    top: calc(1 * var(--offset));
+    animation: square4 var(--duration) var(--delay) var(--timing-function) infinite,
+      squarefadein var(--in-duration) calc(3 * var(--in-delay)) var(--in-timing-function) both;
+  }
+
+  .loadingspinner #square5 {
+    left: calc(3 * var(--offset));
+    top: calc(1 * var(--offset));
+    animation: square5 var(--duration) var(--delay) var(--timing-function) infinite,
+      squarefadein var(--in-duration) calc(4 * var(--in-delay)) var(--in-timing-function) both;
+  }
+
+  @keyframes square1 {
+    0% {
+      left: calc(0 * var(--offset));
+      top: calc(0 * var(--offset));
+    }
+
+    8.333% {
+      left: calc(0 * var(--offset));
+      top: calc(1 * var(--offset));
+    }
+
+    100% {
+      left: calc(0 * var(--offset));
+      top: calc(1 * var(--offset));
+    }
+  }
+
+  @keyframes square2 {
+    0% {
+      left: calc(0 * var(--offset));
+      top: calc(1 * var(--offset));
+    }
+
+    8.333% {
+      left: calc(0 * var(--offset));
+      top: calc(2 * var(--offset));
+    }
+
+    16.67% {
+      left: calc(1 * var(--offset));
+      top: calc(2 * var(--offset));
+    }
+
+    25.00% {
+      left: calc(1 * var(--offset));
+      top: calc(1 * var(--offset));
+    }
+
+    83.33% {
+      left: calc(1 * var(--offset));
+      top: calc(1 * var(--offset));
+    }
+
+    91.67% {
+      left: calc(1 * var(--offset));
+      top: calc(0 * var(--offset));
+    }
+
+    100% {
+      left: calc(0 * var(--offset));
+      top: calc(0 * var(--offset));
+    }
+  }
+
+  @keyframes square3 {
+
+    0%,
+    100% {
+      left: calc(1 * var(--offset));
+      top: calc(1 * var(--offset));
+    }
+
+    16.67% {
+      left: calc(1 * var(--offset));
+      top: calc(1 * var(--offset));
+    }
+
+    25.00% {
+      left: calc(1 * var(--offset));
+      top: calc(0 * var(--offset));
+    }
+
+    33.33% {
+      left: calc(2 * var(--offset));
+      top: calc(0 * var(--offset));
+    }
+
+    41.67% {
+      left: calc(2 * var(--offset));
+      top: calc(1 * var(--offset));
+    }
+
+    66.67% {
+      left: calc(2 * var(--offset));
+      top: calc(1 * var(--offset));
+    }
+
+    75.00% {
+      left: calc(2 * var(--offset));
+      top: calc(2 * var(--offset));
+    }
+
+    83.33% {
+      left: calc(1 * var(--offset));
+      top: calc(2 * var(--offset));
+    }
+
+    91.67% {
+      left: calc(1 * var(--offset));
+      top: calc(1 * var(--offset));
+    }
+  }
+
+  @keyframes square4 {
+    0% {
+      left: calc(2 * var(--offset));
+      top: calc(1 * var(--offset));
+    }
+
+    33.33% {
+      left: calc(2 * var(--offset));
+      top: calc(1 * var(--offset));
+    }
+
+    41.67% {
+      left: calc(2 * var(--offset));
+      top: calc(2 * var(--offset));
+    }
+
+    50.00% {
+      left: calc(3 * var(--offset));
+      top: calc(2 * var(--offset));
+    }
+
+    58.33% {
+      left: calc(3 * var(--offset));
+      top: calc(1 * var(--offset));
+    }
+
+    100% {
+      left: calc(3 * var(--offset));
+      top: calc(1 * var(--offset));
+    }
+  }
+
+  @keyframes square5 {
+    0% {
+      left: calc(3 * var(--offset));
+      top: calc(1 * var(--offset));
+    }
+
+    50.00% {
+      left: calc(3 * var(--offset));
+      top: calc(1 * var(--offset));
+    }
+
+    58.33% {
+      left: calc(3 * var(--offset));
+      top: calc(0 * var(--offset));
+    }
+
+    66.67% {
+      left: calc(2 * var(--offset));
+      top: calc(0 * var(--offset));
+    }
+
+    75.00% {
+      left: calc(2 * var(--offset));
+      top: calc(1 * var(--offset));
+    }
+
+    100% {
+      left: calc(2 * var(--offset));
+      top: calc(1 * var(--offset));
+    }
+  }
+
+  @keyframes squarefadein {
+    0% {
+      transform: scale(0.75);
+      opacity: 0.0;
+    }
+
+    100% {
+      transform: scale(1.0);
+      opacity: 1.0;
+    }
+  }
+</style>
+<!------------------------------------------Preload modal------------------------------>
+<style>
+  .carga1 {
+    z-index: 999;
+    width: 100%;
+    height: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    pointer-events: none;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    background-color: #24253a3b;
+    opacity: 0;
+  }
+
+  .cargaOcultar {
+    z-index: 999;
+    width: 100%;
+    height: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    pointer-events: none;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    background-color: #393b5bfa;
+    opacity: 0;
+  }
+
+  .cargaMostrar {
+    z-index: 999;
+    width: 100%;
+    height: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    pointer-events: all;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    background-color: #393b5bfa;
+    opacity: 1;
+  }
+
+  .max {
+    min-height: 100%;
+  }
+
+  .mostrarModal1 {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .ocultarModal1 {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .dots-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+  }
+
+  .dot {
+    height: 20px;
+    width: 20px;
+    margin-right: 10px;
+    border-radius: 10px;
+    background-color: #b3d4fc;
+    animation: pulse 1.5s infinite ease-in-out;
+  }
+
+  .dot:last-child {
+    margin-right: 0;
+  }
+
+  .dot:nth-child(1) {
+    animation-delay: -0.3s;
+  }
+
+  .dot:nth-child(2) {
+    animation-delay: -0.1s;
+  }
+
+  .dot:nth-child(3) {
+    animation-delay: 0.1s;
+  }
+
+  @keyframes pulse {
+    0% {
+      transform: scale(0.8);
+      background-color: #b3d4fc;
+      box-shadow: 0 0 0 0 rgba(178, 212, 252, 0.7);
+    }
+
+    50% {
+      transform: scale(1.2);
+      background-color: #6793fb;
+      box-shadow: 0 0 0 10px rgba(178, 212, 252, 0);
+    }
+
+    100% {
+      transform: scale(0.8);
+      background-color: #b3d4fc;
+      box-shadow: 0 0 0 0 rgba(178, 212, 252, 0.7);
+    }
+  }
+</style>
+<!------------------------------------------Preload inputs------------------------------>
+<style>
+  .spinnerInput {
+    background-image: linear-gradient(rgb(186, 66, 255) 35%, rgb(0, 225, 255));
+    width: 30px;
+    height: 30px;
+    animation: spinning82341 1.7s linear infinite;
+    text-align: center;
+    border-radius: 50px;
+    filter: blur(1px);
+    box-shadow: 0px -5px 20px 0px rgb(186, 66, 255), 0px 5px 20px 0px rgb(0, 225, 255);
+  }
+
+  .spinnerInput1 {
+    background-color: rgb(36, 36, 36);
+    width: 30px;
+    height: 30px;
+    border-radius: 50px;
+    filter: blur(10px);
+  }
+
+  @keyframes spinning82341 {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+</style>
+<!------------------------------------------Preload inputs cuadrado------------------------------>
+<style>
+  .loader {
+    --cell-size: 22px;
+    --cell-spacing: 1px;
+    --cells: 3;
+    --total-size: calc(var(--cells) * (var(--cell-size) + 2 * var(--cell-spacing)));
+    display: flex;
+    flex-wrap: wrap;
+    width: var(--total-size);
+    height: var(--total-size);
+  }
+
+  .cell {
+    flex: 0 0 var(--cell-size);
+    margin: var(--cell-spacing);
+    background-color: transparent;
+    box-sizing: border-box;
+    border-radius: 4px;
+    animation: 1.5s ripple ease infinite;
+  }
+
+  .cell.d-1 {
+    animation-delay: 100ms;
+  }
+
+  .cell.d-2 {
+    animation-delay: 200ms;
+  }
+
+  .cell.d-3 {
+    animation-delay: 300ms;
+  }
+
+  .cell.d-4 {
+    animation-delay: 400ms;
+  }
+
+  .cell:nth-child(1) {
+    --cell-color: #6A2181;
+  }
+
+  .cell:nth-child(2) {
+    --cell-color: #6A2181;
+  }
+
+  .cell:nth-child(3) {
+    --cell-color: #6A2181;
+  }
+
+  .cell:nth-child(4) {
+    --cell-color: #6A2181;
+  }
+
+  .cell:nth-child(5) {
+    --cell-color: #6A2181;
+  }
+
+  .cell:nth-child(6) {
+    --cell-color: #6A2181;
+  }
+
+  .cell:nth-child(7) {
+    --cell-color: #6A2181;
+  }
+
+  .cell:nth-child(8) {
+    --cell-color: #6A2181;
+  }
+
+  .cell:nth-child(9) {
+    --cell-color: #6A2181;
+  }
+
+
+  /*Animation*/
+  @keyframes ripple {
+    0% {
+      background-color: transparent;
+    }
+
+    30% {
+      background-color: var(--cell-color);
+    }
+
+    60% {
+      background-color: transparent;
+    }
+
+    100% {
+      background-color: transparent;
+    }
+  }
+
+
+  .infoCarga {
+    color: white;
+    font-size: 25px;
+
+  }
+
+  .btnPdf {
+    color: #01745B ;
+  }
+  .btnPdf:hover{
+    color: #04a17f;
+  }
+
+  .btnPdf2 {
+    color: #3C3C3B ;
+  }
+  .btnPdf2:hover{
+    color: #716e6e;
+  }
+
+  .btn1 {
+    background-color: #6A2181;
+  }
+
+  .btn1:hover {
+    background-color: #267ea6;
+
+  }
+</style>
+<!----------------CONTENIDO PRINCIPAL------------------------>
+<style>
+  .addDivMostrarDatosFacturaClaseContenido{
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    padding: 5px;
+  }
+  .addDivMostrarDatosFacturaClaseTitulo{
+    background-color: #6A2181;
+    color: white;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    padding: 5px;
+  }
+  .addDivMostrarDatosFacturaClase{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-wrap: nowrap;
+    //border: 1px solid;  
+  }
+  .divInfoFactura{
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 4px;
+    flex-direction: row;
+    align-items: center;
+  }
+  .titulosColorBeisFacturas{
+    color: #756d6d;
+    font-weight: bold;
+    background-color: #f3dbb1;
+    border: 1px solid #f0bd7c;
+    border-radius: 7px;
+    padding: 10px;
+  }
+
+
+  .btnAceptar {
+    background-color: #08b63e;
+  }
+
+  .btnRechazar {
+    background-color: #be0909;
+  }
+
+  .btnEstadoPendienteRevision {
+    background-color: #0897b6;
+    color: white;
+    padding: 4px;
+    border: 2px solid #3b6973;
+    border-radius: 20px;
+  }
+
+  .btnEstadoContabilizadoAMano {
+    background-color: #b6a908;
+    color: white;
+    padding: 4px;
+    border: 2px solid #8b8435;
+    border-radius: 20px;
+  }
+  .btnEstadoContabilizada {
+    background-color: #64b5a2;
+    color: white;
+    padding: 4px;
+    border: 2px solid #737373;
+    border-radius: 20px;
+  }
+  .btnEstadoPendientedepago {
+    white-space: nowrap;
+    background-color: #6784c3;
+    color: white;
+    padding: 4px;
+    border: 2px solid #515151;
+    border-radius: 20px;
+  }
+
+  .btnEstadoPagada {
+    background-color: #5a5e67;
+    color: white;
+    padding: 4px;
+    border: 2px solid #515151;
+    border-radius: 20px;
+  }
+  .btnEstadoFirmado {
+    background-color: #08b63e;
+    color: white;
+    padding: 4px;
+    border: 2px solid #618f6f;
+    border-radius: 20px;
+  }
+  .btnEstadoRechazado {
+    background-color: #ed8787;
+    color: white;
+    padding: 4px;
+    border: 2px solid #454544;
+    border-radius: 20px;
+  }
+
+  .divHistorialContainerGlobalClase{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+
+  }
+  .clase100ancho{
+    width:100%;
+  }
+  .margenTop15px {
+      margin-top:15px;
+  }
+
+
+  //CONTENIDO PRINCIPAL 
+  #contenidoPrincipal {
+    margin-top: 1%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 840px;
+  }
+
+  //CONTENIDO TABLA 
+  #contenidoBtns {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+</style>
+<!----------------OCULTAR O MOSTRAR ELEMTOS ------------------------>
+<style>
+  .unBloque {
+    display: inline-block;
+  }
+
+  .ocultar {
+    display: none;
+  }
+
+  .mostrar {
+    display: block;
+  }
+
+  .mostrarFlex {
+    display: flex;
+  }
+
+  .ocultarImportant {
+      visibility: hidden !important;
+      width:0px;
+       height:0px;
+  }
+
+  .mostrarImportant {
+      visibility: visible !important;
+  }
+
+  .mostrarFlexImportant {
+    display: flex !important;
+  }
+</style>
+<!--------------COLOR TEXTO COLOCAR ELMENTOS ----------------------->
+<style>
+  /* #tablaFactura1_wrapper {
+    width: 100%;
+  }
+
+  #tablaFactura2_wrapper {
+    width: 100%;
+  } */
+
+  .dosTablas {
+    display: flex;
+    justify-content: space-around;
+  }
+
+  .flexSW {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+  }
+
+
+  .flexRCSP {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-around;
+  }
+
+
+  //fila con los elemtos centrados
+  .flexRow {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+  }
+
+  .flexRCC {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .flexRCEC {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-evenly;
+  }
+
+  .flexRowSpaceEvenly {
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+    justify-content: space-evenly;
+    //flex-wrap: wrap;
+  }
+
+  .flexCRSB {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .flexCRSBA {
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  .flexColumna {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .flexColumnaAuto {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .flexCCC {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .anchoTablas90 {
+    width: 100%;
+  }
+
+  .letraBlanca {
+    color: white;
+    font-weight: bold;
+  }
+
+  .negrita {
+    font-weight: bold;
+    color: black;
+  }
+
+  .productoPresupuesto {
+    flex-basis: 90%;
+  }
+
+
+
+
+
+  .iconoImput {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .iconoSelect {
+    display: flex;
+    justify-content: center;
+  }
+
+  .entrada {
+    display: flex;
+    flex-direction: column;
+  }
+
+
+
+  .anchoMax {
+    width: 100%
+  }
+</style>
+<!-------------------VALIDACION CAMPOS------------------------------>
+<style>
+  .clasevalidacion {
+    width: 100%;
+    display: flex;
+    justify-content: end;
+  }
+
+  .validacionRojo {
+    color: red;
+    display: flex;
+    width: 100%;
+    justify-content: end;
+  }
+
+  .label-validacion {
+    color: red;
+  }
+
+  .validacionVerde {
+    color: green;
+    display: flex;
+    width: 100%;
+    justify-content: end;
+  }
+
+  .novalidacion {
+    display: none;
+  }
+
+  .btnEliminar {
+    background-color: #d20000;
+  }
+</style>
+  <!---------------------albaranes------------------------>
+
+<style>
+  .clasedivalbaranes {
+    display: flex;
+    gap: 10px;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+}
+  .claseparrafoalbaranes {
+    display: inline;
+}
+
+  .clasefilaalbaranes{
+    display: flex;
+    gap: 20px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    margin: 20px 20px 70px 20px;
+  }
+</style>

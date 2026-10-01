@@ -1,0 +1,914 @@
+<!-------------ABRIR MODAL REVISAR FACTURA---------------------------------------------------->
+<script>
+  function abrirModalAdjuntarFactura(datosSolicitudFirma){ 
+    datos_exp_abrirModalAdjuntarFactura = datosSolicitudFirma
+    //ENLACE ALBARANES
+    var enlacesAlbaranes
+    //DATOS SOLICITUD FACTURA
+    var datos = datosSolicitudFirma
+    //DATOS SOLICITUD FACTURA STRING
+    var datosString = JSON.stringify(datos);
+    console.log('albaranes')
+    console.log(albaranes)
+
+    //ALBARANES SIN ASIGNAR DE LA LICITACION
+    const albaranesSinAsignar = albaranes.filter(albaran => {
+      console.log(albaran)
+      console.log(datos)
+        return albaran[2] === datos[3] && albaran[6] === '';
+    });
+    console.log('albaranesSinAsignar')
+    console.log(albaranesSinAsignar)
+
+    //ALBARANES ASIGNADO A LA FACTURA
+    const albaranesAsignados = albaranes.filter(albaran => {
+        return albaran[2] === datos[3] && albaran[6] === datos[2];
+    });
+    console.log('albaranesAsignados')
+    console.log(albaranesAsignados)
+    
+    //Damos el formato deseado [{},{}] A LOS ALBARANES
+    const conjuntoAlbaranes = albaranesSinAsignar.map(item => {
+      const id = item[4]; // Puedes ajustar el índice según la posición del ID en tus datos
+      const urlArchivoAlbaran = item[5];
+      const fechaAlbaran = item[3];
+      return { [id]: { fechaAlbaran, urlArchivoAlbaran } };
+    });
+    
+    console.log('conjuntoAlbaranes')
+    console.log(conjuntoAlbaranes)
+
+    const urlsArchivoAlbaranArrayLink = albaranesSinAsignar.map(item => {
+      const urlArchivoAlbaran = item[5];
+      return urlArchivoAlbaran;
+    });
+    console.log('urlsArchivoAlbaranArrayLink')
+    console.log(urlsArchivoAlbaranArrayLink)
+
+    //Damos el formato deseado [{},{}] STRING
+    var conjuntoAlbaranesString = JSON.stringify(conjuntoAlbaranes);
+    //Damos el formato deseado [{},{}] STRING
+    console.log('conjuntoAlbaranesString')
+    console.log(conjuntoAlbaranesString)
+    conjuntoAlbaranesAsignados = albaranesAsignados.map(item => {
+      const id = item[4]; // Puedes ajustar el índice según la posición del ID en tus datos
+      const urlArchivoAlbaran = item[5];
+      const fechaAlbaran = item[3];
+      const idAlbaran = item[1];
+      return { [id]: { fechaAlbaran, urlArchivoAlbaran, idAlbaran} };
+    });
+    console.log('conjuntoAlbaranesAsignados')
+    console.log(conjuntoAlbaranesAsignados)
+    console.log('expedientes')
+    console.log(expedientes)
+    //EXPEDIENTES
+    const expediente = expedientes.filter(expediente => expediente[0] == datos[3]);
+    //FACTURA 
+
+    var enlaceFactura = generarEnlacesGoogleDrivePrueba(datos[9], 'pdf');
+    if(datosCombinados && Object.keys(datosCombinados).length > 0){  
+      //CORREO PROVEEDOR
+      var email = datosCombinados[datos[3]] && datosCombinados[datos[3]].datos_prov ? datosCombinados[datos[3]].datos_prov.email : 'ValorPredeterminado';
+      //ASUNTO NEXPEDIENTE
+      var asunto = datosCombinados[datos[3]] ? datosCombinados[datos[3]].asunto : 'Sin asunto';
+
+      //CONFIGURAMOS EL MODAL
+      configurarModal('modalGeneral','contenidoM','modalMax','modalPeq','modalMed','max')
+
+      //ENCABEZADO MODAL
+      generarElementoDinamico('encabezadoModal','labelNFactura','Nº factura',datos[1])
+      generarElementoDinamico('encabezadoModal','labelNExpediente','NºExpediente',datos[3])
+      generarElementoDinamico('encabezadoModal','labelAsunto','Asunto',asunto)
+      generarElementoDinamico('encabezadoModal','labelFirmarRechazar','Firmar/rechazar','Pendiente')
+      generarIconoMaterial('encabezadoModal')
+
+      //ESTRUCTURA
+      addDiv('contenidoGeneral','contenedorObs','flexRCSP anchoMax')
+      addDiv('contenidoGeneral','divBtnsArchivos','flexRCSP anchoMax')
+      addDiv('contenidoGeneral','informacionFactura','flexCCC anchoMax')
+
+
+      //ALBARANES
+      addTitulo('h5','contenidoGeneral','Albaranes adjuntos a la factura '+document.getElementById("labelNFactura").textContent,'center negrita')
+
+      /** Alvaro, añado div para mostrar los albaranes que ya estan adjuntos */
+      addDiv('contenidoGeneral','informacionAlbaranes_asignados','clasefilaalbaranes')
+      for(var j = 0;j < conjuntoAlbaranesAsignados.length; j++){
+        addDiv('informacionAlbaranes_asignados','divpdfalbaran'+j,'clasedivalbaranes')
+        //addTitulo(elemetoHtml,idContenedor,texto,clase,id)
+        var texto_albaran ="Nº Alb: " + Object.keys(conjuntoAlbaranesAsignados[j]) + " ; Fecha: "+conjuntoAlbaranesAsignados[j][Object.keys(conjuntoAlbaranesAsignados[j])].fechaAlbaran
+        addTitulo('p','divpdfalbaran'+j, texto_albaran,'claseparrafoalbaranes','albaran_dinamico_'+j)
+        //addIcono(contenedor, archivos,titulos,clase,tipoIcono,link) 
+        addIcono('divpdfalbaran'+ j, [conjuntoAlbaranesAsignados[j][Object.keys(conjuntoAlbaranesAsignados[j])].urlArchivoAlbaran], [''],"Small material-icons btnPdf","picture_as_pdf",true)
+        addIconoID('divpdfalbaran'+ j, [''], [''],"Small material-icons btnPdf","unarchive",false,"iconodesvincularalbaran"+j)
+        var idAlbaranDelBucle =conjuntoAlbaranesAsignados[j][Object.keys(conjuntoAlbaranesAsignados[j])].idAlbaran
+        console.log("idAlbaranDelBucle -" +idAlbaranDelBucle)
+        // Obtener el elemento por su ID
+        var elementoIconoDesarchivar = document.getElementById('iconodesvincularalbaran' + j);
+
+        // Verificar si el elemento se encontró correctamente
+        if (elementoIconoDesarchivar) {
+           elementoIconoDesarchivar.style.cursor = "pointer";
+          console.log("entra elementoIconoDesarchivar")
+            // Asignar un evento onclick al elemento
+            elementoIconoDesarchivar.onclick = function() {
+              console.log("click elementoIconoDesarchivar")
+                // Mostrar una ventana de confirmación antes de borrar
+                Swal.fire({
+                  title: '¿Estás seguro?',
+                  text: 'Al presionar el botón, desvincularás el albarán de esta factura. ¿Desea continuar?',
+                  icon: 'warning',
+                  showCancelButton: true,
+                  confirmButtonColor: '#3085d6',
+                  cancelButtonColor: '#d33',
+                  confirmButtonText: 'Sí, Desvincular',
+                  cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                  if (result.isConfirmed) {
+                    console.log("result.isConfirmed")
+                    google.script.run
+                      .withSuccessHandler(desvincularAlbaranDeFacturaJSCorrecto)
+                      .withFailureHandler(desvincularAlbaranDeFacturaJSError)
+                      .desvincularAlbaranDeFacturaGS(idAlbaranDelBucle)
+                      
+                      mostrarOcultarLoaderGeneral('cargaEnvioGeneral','textoCargaGeneral',"Desvinculando albarán.",'ocultarImportant','carga')
+                  }
+                });
+            };
+        }
+      }
+
+      addDiv('contenidoGeneral','informacionAlbaran','row s12 m12 l12 input-field')
+      addDiv('contenidoGeneral','contenedorAddSelectAlbaranes','flexColumna anchoMax')
+      addDiv('contenidoGeneral','contenedorPrimario','row container center ocultarImportant')
+      addDiv('contenidoGeneral','contenedorSecundario','row container center ocultarImportant')
+      addDiv('informacionAlbaran','tituloBtnAlbaranes','flexRCSP col s12 m12 l12 input-field')
+      addDiv('informacionAlbaran','informacionAlbaran2','flexRCSP row col s12 m12 l12 row')
+      addDiv('contenedorObs','contenedorLabelObservaciones','flexCCC anchoMax')
+      addDiv('divBtnsArchivos','divTituloFactura','flexRCC anchoMax')
+      
+      //BTN ADJUNTAR ALBARANES AL EXPEDIENTE LO MISMO QUE EN PEDIDOS
+      var btnAdjuntarAlbaranesAlExpediente = addBoton('contenedorPrimario','btnAdjuntarAlbaranesAlExpediente','waves-effect waves-light btn btn1','','Adjuntar albaranes a la factura')
+      btnAdjuntarAlbaranesAlExpediente.onclick = function() {
+        adjuntarAlbaranesAlExpediente()
+      };
+      
+
+
+      //FORMULARIO
+      addForm('contenidoGeneral','formularioFirmarFactura','formularioModal')
+  
+      //OBSERVACIONES USUARIO SOLICITANTE 
+      addTitulo('h5','contenedorLabelObservaciones','Observaciones de '+ obtenerNombreUsuario(datos[5]) + ' :' + datos[8])
+
+      //FACTURA
+      var switchFactura= generarSwitch('divTituloFactura','idMostrarDivFactura','Factura','Factura', "textoSwitch flexRCSP")
+      switchFactura.addEventListener("change", function(a) {
+        var buscadorTabla = document.getElementById("carrusel-Factura");
+        if(a.target.checked) {
+          buscadorTabla.classList.remove('ocultarImportant')
+        } else {
+          buscadorTabla.classList.add('ocultarImportant')
+        }
+      });
+      //FRAME DE LA FACTURA
+      addDiv('informacionFactura','carrusel-Factura','flexCCC anchoMax ocultarImportant')
+      var carruselFactura = $("#carrusel-Factura");
+      addFrame(carruselFactura,enlaceFactura,'Factura: '+datos[1],1,'idIfremInfo','anchoMax')
+      
+      //VER ALBARANES
+      var btnVerAlbaranesAdjuntos = addBoton('divTituloFactura','btnVerAlbaranes','waves-effect waves-light btn btn1 col s12 m12 l12 input-field',"",'Ver albaranes adjuntos',false,'Ver todos los albaranes adjuntos a la factura','bottom')
+      btnVerAlbaranesAdjuntos.onclick = function() {
+      // Aquí puedes colocar el código que quieres que se ejecute cuando se haga clic en el botón
+        if(conjuntoAlbaranesAsignados.length > 0){
+          abrirDocumentacion(conjuntoAlbaranesAsignados,datos)
+        } else {
+        generarAviso('¡Selecciona mínimo un albarán!','error',false,false,'Para visualizar todos los albaranes, debemos seleccionar mínimo uno')
+        }
+      };
+
+      /** LO quitamos Alvaro
+       * 
+      */
+      //COMPONENTE ALBARANES SELECCIONAR
+      if(conjuntoAlbaranes.length >= 1){
+        generarComponeneteDataListAlbaran(conjuntoAlbaranesString)
+      }else{
+        addTitulo('h5','informacionAlbaran','No contiene albaranes adjuntos al expediente','center','idTituloAlbaranes')
+      }
+
+      //MOSTRAR O OCULTAR ADJUNTAR ALBARANES AL EXPEDIENTE
+      var switchAdjuntarAlbaran = generarSwitch('divTituloFactura','idMostrarDivAdjuntarAlbaran','Adjuntar Albaran a la factura','Adjuntar Albaran a la factura', "textoSwitch flexRCSP")
+      switchAdjuntarAlbaran.addEventListener("change", function(a) {
+        var contenedorAdjuntarAlbaranesAlExpediente = document.getElementById("contenedorSecundario");
+        var contenedorbtn = document.getElementById("contenedorPrimario");
+        if(a.target.checked) {
+          contenedorAdjuntarAlbaranesAlExpediente.classList.remove('ocultarImportant')
+          contenedorbtn.classList.remove('ocultarImportant')
+        } else {
+          contenedorAdjuntarAlbaranesAlExpediente.classList.add('ocultarImportant')
+          contenedorbtn.classList.add('ocultarImportant')
+        }
+      });
+
+      //COMPONENTE PARA ADJUNTAR ALBARANES AL EXPEDIENTE
+      addComponenteImgBlur()
+
+      //OBSERVACIONES USUARIO FIRMANTE
+      addTitulo('h5','formularioFirmarFactura','Observaciones firmante','center negrita')
+
+      //DATOS OCULTOS
+      addInput('formularioFirmarFactura','obsFactura','text','Observaciones','campoRellenable','col s12 m6 l6 input-field')
+      addInput('formularioFirmarFactura','idCarpeta','text','Id carpeta','campoRellenable','ocultar')
+      addInput('formularioFirmarFactura','idArchivoFactura','text','Id archivo factura','campoRellenable','ocultar','retornoInput').value = datos[9]
+      addInput('formularioFirmarFactura','arrayAlbaranesPorAdjuntar','text','Albaranes por adjuntar','campoRellenable','ocultar','retornoInput').value
+      addInput('formularioFirmarFactura','arrayAlbaranes','text','Albaranes adjuntos a la factura','campoRellenable','ocultar','retornoInput').value = datos[13]
+      addInput('formularioFirmarFactura','idFactura','text','Id factura','campoRellenable','ocultar','retornoInput').value = datos[2]
+      addInput('formularioFirmarFactura','nExpediente','text','nExpediente','campoRellenable','ocultar','retornoInput').value = datos[3]
+      addInput('formularioFirmarFactura','emailProveedor','text','emailProveedor','campoRellenable','ocultar','retornoInput').value = email
+      addInput('formularioFirmarFactura','objetoConjuntoFacturas','text','Conjunto de facturas','campoRellenable','ocultar')
+      addInput('formularioFirmarFactura','arrayDatosFacturaAntesDeFirma','text','Conjunto de facturas','campoRellenable','ocultar','retornoInput').value = datosString
+
+      //BTNS FIRMAR
+      var btnFirmarFactura = addBoton('contenedorBotones','btnFirmarFactura','waves-effect waves-light btn anchoMax btnAceptar','','Firmar factura')
+      btnFirmarFactura.onclick = function() {
+        var formulario = document.getElementById('formularioFirmarFactura')
+        adjuntarAlbaranes(formulario,datos[1],datos[3],asunto,0,conjuntoAlbaranesAsignados)
+      };
+
+
+      //BTN RECHAZAR
+      var btnRechazarFactura=addBoton('contenedorBotones','btnRechazarFactura','waves-effect waves-light btn anchoMax btnRechazar', '','Rechazar factura')
+      btnRechazarFactura.onclick = function() {
+        rechazarFactura(formularioFirmarFactura, datos,datosCombinados[datos[3]])
+      };
+
+      /** QUITO LO DE FABRICIO ALBARANES ADJUNTOS A LA FACTURA (FRAN)*/
+      document.getElementById("informacionAlbaran").innerHTML=""
+
+      //ABRIR MODAL
+      abrirModal("modalGeneral")
+    }else{
+      generarAviso('¡Faltan datos por cargar!','error',false,false,'Información de los expedientes disponibles')
+    } 
+
+    /** lo creo al final Fran*/ 
+    addInput('formularioFirmarFactura','numfacturaformulario','text','','sinclase','ocultar');
+    document.getElementById("numfacturaformulario").value = datos[2]
+  }
+
+  function desvincularAlbaranDeFacturaJSCorrecto(){
+      /*** f.andujar aqui va el refrescar archivos ya que termino de subir los albaranes*/
+      obtenerDatos(datosAlbaranes).then(function(albaranesRes) {
+        albaranes = albaranesRes
+        // Ocultar el loader y procesar los datos
+        mostrarOcultarLoaderGeneral('cargaEnvioGeneral', 'textoCargaGeneral', "Desvinculando albarán", 'carga', 'ocultarImportant');
+        cerrarModal("modalGeneral")
+        abrirModalAdjuntarFactura(datos_exp_abrirModalAdjuntarFactura)
+      }).catch(function(error) {
+      });
+  }
+  function desvincularAlbaranDeFacturaJSError(error){
+    Swal.fire({
+      icon: "error",
+      title: "ERROR: "+error
+    });
+  }
+</script>
+
+<!-------ABRIR MODAL CONTABILIZAR falta cargar los n Cuentas tarda mucho----------------------->
+<script>
+  function abrirModalContabilizar(datos){
+    console.log( "abrir modal contabilizar [" + datos + "]")
+    if(datos[10]=="Firmado"){
+      modalParaFirmado(datos)
+    }else{
+      modalParaResto(datos)
+    }
+
+  }
+  function modalParaFirmado(datos){
+    nProcesos += 1;
+    comprobarNprocesos('textoNotificacion', 'Nº Solicitudes de datos:' + nProcesos);
+
+    console.log("datos[16]:", datos[16]);
+
+    // Función segura para obtener objeto desde string u objeto
+    /*
+    function parseProveedorSeguro(dato) {
+        if (!dato) {
+            console.warn('Dato vacío o null:', dato);
+            return null;
+        }
+
+        // Si ya es objeto, devolvemos tal cual
+        if (typeof dato === 'object') {
+            return dato;
+        }
+
+        // Si es string, limpiamos y parseamos
+        if (typeof dato === 'string') {
+            try {
+                // Limpiamos saltos de línea, tabs y retornos de carro
+                let clean = dato.replace(/[\n\r\t]/g, ' ');
+
+                // Reemplazamos comillas simples por dobles si parecen json mal formateado
+                // Esto ayuda cuando el string viene de formularios o Google Sheets
+                if (/^'{.*}'$/.test(clean)) {
+                    clean = clean.replace(/^'/, '').replace(/'$/, '').replace(/'/g, '"');
+                }
+
+                return JSON.parse(clean);
+            } catch (e) {
+                console.error('Error parseando JSON:', e, 'Dato original:', dato);
+                return null;
+            }
+        }
+
+        console.warn('Tipo de dato inesperado:', typeof dato, dato);
+        return null;
+    }*/
+
+    // Aplicamos el parse seguro
+    console.log( "console datos 16 code: "+
+      [...datos[16]].map(c => c.charCodeAt(0))
+    );
+
+    var objetoProveedor = JSON.parse(datos[16]);
+
+        console.log(objetoProveedor)
+        console.log("cuentaCorrienteGlobal    "+cuentaCorrienteGlobal)
+        
+
+        google.script.run
+        .withSuccessHandler(function (value) {
+          console.log("proveedores_codigo_contable_4 (Trae) -> "+value)//f.andujar@esmasalcorcon.con
+          mostrarOcultarElemento('idLoadcuentaCorriente2','idLabelcuentaCorriente2','selectProveedor')
+          // mostrarOcultarElemento('idLoadcuentaCorriente2','idLabelcuentaCorriente2','selectUsuario')
+          console.log(value)
+          // Selecciona el datalist por su ID
+          var dataList = document.getElementById('datalistoptions2');
+          // Limpia los elementos actuales dentro del datalist
+          if(dataList){
+            dataList.innerHTML = '';
+            var mensaje = "Se encontraron " + value.length + " resultados.";
+            var asignacionAutomatica = false;
+            asignacionAutomatica = (value.length == 1 ? true : false) 
+            // Itera sobre los nuevos valores y crea nuevas opciones para el datalist
+            value.forEach(function(valor) {
+              var option = document.createElement('option');
+              option.value = valor[0];
+              dataList.appendChild(option);
+              mensaje += "La cuenta 4 es: " + valor[0] + ". La razón social es: " + valor[1];
+              if(asignacionAutomatica){
+                document.getElementById("selectProveedor").value = valor[0];
+                document.getElementById("selectProvedor").value = valor[1];
+                document.getElementById("selectProveedor").disabled = true;
+                document.getElementById("selectProvedor").disabled = true;
+                M.updateTextFields();
+              }
+            });     
+            
+            if(!asignacionAutomatica){
+              document.getElementById("selectProveedor").value = "";
+              document.getElementById("selectProvedor").value = "";
+              document.getElementById("selectProveedor").disabled = true;
+              document.getElementById("selectProvedor").disabled = true;
+              M.updateTextFields();
+              Swal.fire({
+                icon: "error",
+                title: mensaje
+              });
+            }
+
+          }else{
+            generarAviso('¡No hay elementos html a los que asignar el valor!','error',false,false,'Lo que ha sucedido es que hemos cerrado el modal , y no pude sustituir valores')
+          }
+          nProcesos -= 1;
+          comprobarNprocesos('textoNotificacion','Nº Solicitudes de datos:' + nProcesos) 
+          //var proveedor = value
+        }).proveedores_codigo_contable_4(objetoProveedor.cif);
+
+        //var cuentaCorriente = ['']
+        var proveedor = ['']
+        var btnContabilizarSage = document.getElementById("btnContabilizarSage");
+        //Datos para el dataList
+        var arrayUc=datos[18].split(',')
+        var unidadDeCoste = arrayUc
+
+        configurarModal('modalGeneral','contenidoM','modalMax','modalPeq','modalMed','max')
+        addDiv('encabezadoModal','divTituloInfo','anchoMax')
+        addTitulo('h5','divTituloInfo','Factura: '+datos[1],'titulosColorBeisFacturas classCursorPointer')
+        document.getElementById('divTituloInfo').addEventListener("click", function() {
+            copiarTexto(datos[1]);
+        });
+        //generarIconoMaterial('encabezadoModal')
+        addForm('contenidoGeneral','formularioContabilizacion','formularioModal')
+        addDiv('formularioContabilizacion','formularioParte1','row flexCCC')
+        addDiv('formularioParte1','formularioParte1.1','divInfoFactura')
+        addDiv('formularioParte1','formularioParte1.2','divInfoFactura')
+        addDiv('formularioContabilizacion','divInfoProveedor','row col s12 flexCCC')
+        addDiv('formularioContabilizacion','formularioParte2','row flexSW')
+        addDiv('contenidoGeneral','formularioParte3','row flexSW anchoMax')
+        addDiv('formularioParte2','formularioDatalist1','flexSW')
+        addDiv('formularioParte2','formularioDatalist2','flexSW')
+        addDiv('formularioParte2','formularioDatalist22','flexSW')
+        addDiv('formularioParte2','formularioDatalist3','flexSW')
+        addDiv('formularioContabilizacion','formularioParte4','flexSW row ')
+        addDiv('formularioParte4','formularioParte41','flexSW row ')
+        addDiv('formularioContabilizacion','formularioParte5','flexSW row')
+        addDiv('formularioContabilizacion','divHistorial','row col s12 flexCCC')
+
+
+
+        addTitulo('h5','formularioParte1.1','Info. Factura','center')
+
+        addInput('formularioParte1.2','idFacturaContabilizar','text','Id factura','campoRellenable','col s12 m4 l2 input-field ocultar','retornoInput',true).value=datos[2]
+        addInput('formularioParte1.2','idFactura','text','Id factura','campoRellenable','col s12 m4 l2 input-field ocultar','retornoInput',true).value=datos[1]
+        addInput('formularioParte1.2','estadoFactura','text','Estado','campoRellenable','col s12 m4 l2 input-field ocultar','retornoInput',true).value=datos[10]
+        addInput('formularioParte1.2','usuarioFactura','text','Usuario','campoRellenable','col s12 m4 l2 input-field ocultar','retornoInput',true).value=datos[5]
+        addInput('formularioParte1.2','nExpedienteFactura','text','N Expediente','campoRellenable','col s12 m4 l2 input-field ocultar','retornoInput',true).value=datos[3]
+        addInput('formularioParte1.2','cuantiaFactura','text','Cuantía','campoRellenable','col s12 m4 l2 input-field ocultar','retornoInput',true).value=datos[7]
+        addInput('formularioParte1.2','fechaFactura1','date','Fecha factura','campoRellenable','col s12 m4 l2 input-field ocultar','retornoInput',true).value=datos[4]
+
+
+        addDivMostrarDatosFactura('formularioParte1.2', 'DivInfoFactura'+'idFacturaContabilizar', 'addDivMostrarDatosFacturaClase ', 'ID Innovación', datos[2]);
+        addDivMostrarDatosFactura('formularioParte1.2', 'DivInfoFactura'+'idFactura', 'addDivMostrarDatosFacturaClase', 'Nº Factura', datos[1]);
+        addDivMostrarDatosFactura('formularioParte1.2', 'DivInfoFactura'+'estadoFactura', 'addDivMostrarDatosFacturaClase', 'Estado', datos[10]);
+        addDivMostrarDatosFactura('formularioParte1.2', 'DivInfoFactura'+'usuarioFactura', 'addDivMostrarDatosFacturaClase', 'Usuario', datos[6]);
+        addDivMostrarDatosFactura('formularioParte1.2', 'DivInfoFactura'+'nExpedienteFactura', 'addDivMostrarDatosFacturaClase', 'N Expediente', datos[3]);
+        addDivMostrarDatosFactura('formularioParte1.2', 'DivInfoFactura'+'cuantiaFactura', 'addDivMostrarDatosFacturaClase', 'Cuantía', datos[7]);
+        addDivMostrarDatosFactura('formularioParte1.2', 'DivInfoFactura'+'fechaFactura1', 'addDivMostrarDatosFacturaClase', 'Fecha factura', datos[4].split(" ")[0]);
+        //addDivMostrarDatosFactura('formularioParte1.2', 'DivInfoFactura'+'cuentaProvedor6', 'addDivMostrarDatosFacturaClase', 'cuentaProvedor6', datos[22]);
+
+
+
+
+        addSelectDataList('formularioDatalist1','Unidad de coste','selectNexpediente',unidadDeCoste,unidadDeCoste,'datalistoptions0',`input-field descripcion col s12 m12 l2 row`,false,'idLoadNexpedienteC','idLabelNexpedienteC')
+        addSelectDataList('formularioDatalist2','Cuenta gasto (6)','selectCuentaGasto',cuentaCorrienteGlobal,cuentaCorrienteGlobal,'datalistoptions1',`input-field descripcion col s12 m12 l2 row validarCamposFran`,true,'idLoadcuentaCorriente','idLabelcuentaCorriente')
+
+          console.log("cuentaCorrienteGlobal    "+cuentaCorrienteGlobal)
+          // Selecciona el datalist por su ID
+          var dataList = document.getElementById('datalistoptions1');
+      
+
+          if(dataList){
+            // Limpia los elementos actuales dentro del datalist
+            dataList.innerHTML = '';
+            // Itera sobre los nuevos valores y crea nuevas opciones para el datalist
+            cuentaCorrienteGlobal.forEach(function(valor) {
+              var option = document.createElement('option');
+              option.value = valor;
+              dataList.appendChild(option);
+
+            });
+            mostrarOcultarElemento('idLoadcuentaCorriente','idLabelcuentaCorriente','selectCuentaGasto')
+          }else{
+            generarAviso('¡Hay elemtos html a los que asignar el valor!','error',false,false,'Lo que ha sucedido es que hemos cerrado el modal , y no pude sustituir valores')
+          }
+
+        addSelectDataList('formularioDatalist22','Cuenta proveedor (4)','selectProveedor',cuentaCorrienteGlobal,cuentaCorrienteGlobal,'datalistoptions2',`input-field descripcion col s12 m12 l2 row validarCamposFran`,true,'idLoadcuentaCorriente2','idLabelcuentaCorriente2')
+        addSelectDataList('formularioDatalist3','Proveedor','selectProvedor',proveedor,proveedor,'datalistoptions3',`input-field descripcion col s12 m12 l2 row validarCamposFran`,false,'idLoadproveedor','idLabelproveedor')
+        addInput('formularioParte2','fechaFactura','date','Fecha contabilizar','campoRellenable','col s12 m6 l2 input-field validarCamposFran','retornoInput').value= new Date()
+        addInput('formularioParte2','ivaAsignado','number','IVA','campoRellenable','col s12 m6 l2 input-field')
+
+        
+        /** CAMBIAR ARRAY SI NECESITAS AGREGAR MOTIVOS DE PAGADO */
+        var motivosDePagado = ["Domiciliado", "Efectivo de Caja", "Tarjeta", "Proforma", "Devolución"]
+
+        addSelectDataList('formularioParte41','Pasar a pagado','selectPagado',motivosDePagado,motivosDePagado,'datalistoptionsPagado',`col s12 m6 l3`,false,'idLoadPagado','idLabelPagado')
+
+        addTextArea('formularioParte5','anotacionesContablizacion','Anotaciones',200)
+
+
+
+        document.getElementById('divInfoProveedor').innerHTML=''
+        // Obtén el valor seleccionado
+        var tipoContrato = datosCombinados[datos[3]];
+        var asunto = datosCombinados[datos[3]] ? datosCombinados[datos[3]].asunto : 'Sin asunto';
+        var email = objetoProveedor && objetoProveedor.email ? objetoProveedor.email : 'Sin email';
+        var cif = objetoProveedor && objetoProveedor.cif ? objetoProveedor.cif : 'Sin CIF';
+        var razon = objetoProveedor && objetoProveedor.razon ? objetoProveedor.razon : 'Sin razon social';
+
+        // Aquí puedes realizar acciones con el valor seleccionado, como cargar datos
+        addTitulo('h5', 'divInfoProveedor', 'Info. Proveedor');
+        addDiv('divInfoProveedor','divInfo','divInfoFactura')
+
+        addInput('divInfo','asuntoProveedor','text','Asunto','campoRellenable','col s12 m6 l6 input-field ocultar','retornoInput',true).value=asunto
+        addInput('divInfo','cifProveedor','text','CIF','campoRellenable','col s12 m6 l6 input-field ocultar','retornoInput',true).value=cif
+        addInput('divInfo','emailProveedor','text','Email','campoRellenable','col s12 m6 l6 input-field ocultar','retornoInput',true).value=email
+        addInput('divInfo','razonProveedor','text','Razón social','campoRellenable','col s12 m6 l6 input-field ocultar','retornoInput',true).value=razon
+
+        addDivMostrarDatosFactura('divInfo', 'DivInfoFactura'+'Asunto', 'addDivMostrarDatosFacturaClase', 'Asunto', asunto);
+        addDivMostrarDatosFactura('divInfo', 'DivInfoFactura'+'CIF', 'addDivMostrarDatosFacturaClase', 'CIF', cif);
+        addDivMostrarDatosFactura('divInfo', 'DivInfoFactura'+'Email', 'addDivMostrarDatosFacturaClase', 'Email', email);
+        addDivMostrarDatosFactura('divInfo', 'DivInfoFactura'+'Razonsocial', 'addDivMostrarDatosFacturaClase', 'Razón social', razon);
+
+        addDiv('divHistorial','divHistorialContainerGlobal','divHistorialContainerGlobalClase')
+
+        //Rechazado
+        if(datos[32]!="" ||datos[17]!="-"){
+          addDiv('divHistorialContainerGlobal','divHistorialRechazado','btnEstadoRechazado clase100ancho')
+          if(datos[32]!=""){
+            let textoFecha="<b>Rechazada</b> : "+ datos[32].slice(0, -3);
+            addTituloNegrita('p','divHistorialRechazado', textoFecha,'sinclase',"")
+          }
+          if(datos[17]!="-"){
+            let textoObs="<b>Observaciones</b> : "+ datos[17]
+            addTituloNegrita('p','divHistorialRechazado', textoObs,'sinclase',"")
+          }
+        }
+        //Pendiente de Revision
+        if(datos[0]!="" ||datos[8]!=""){
+          addDiv('divHistorialContainerGlobal','divHistorialPendienteRevision','btnEstadoPendienteRevision clase100ancho')
+          if(datos[0]!=""){
+            let textoFecha="<b>Solicitud</b> : "+ datos[0].slice(0, -3);
+            addTituloNegrita('p','divHistorialPendienteRevision', textoFecha,'sinclase',"")
+          }
+          if(datos[8]!=""){
+            let textoObs="<b>Observaciones</b> : "+ datos[8]
+            addTituloNegrita('p','divHistorialPendienteRevision', textoObs,'sinclase',"")
+          }
+
+        }
+        //Firmado
+        if(datos[33]!="" ||datos[34]!=""){
+          addDiv('divHistorialContainerGlobal','divHistorialFirmado','btnEstadoFirmado clase100ancho')
+          if(datos[33]!=""){
+            let textoFecha="<b>Firmado</b> : "+ datos[33].slice(0, -3);
+            addTituloNegrita('p','divHistorialFirmado', textoFecha,'sinclase',"")
+          }
+          if(datos[34]!=""){
+            let textoObs="<b>Observaciones</b> : "+ datos[34]
+            addTituloNegrita('p','divHistorialFirmado', textoObs,'sinclase',"")
+          }
+
+        }
+        //Contabalizado a mano
+        if(datos[35]!="" ||datos[36]!=""){
+          addDiv('divHistorialContainerGlobal','divHistorialCmano','btnEstadoContabilizadoAMano clase100ancho')
+          if(datos[35]!=""){
+            console.log("datos[35] "+datos[35])
+            console.log(" typeof datos[35] "+ typeof datos[35])
+            let textoFecha="<b>C.Mano</b> : "+ datos[35].slice(0, -3);
+            addTituloNegrita('p','divHistorialCmano', textoFecha,'sinclase',"")
+          }
+          if(datos[36]!=""){
+            let textoObs="<b>Observaciones</b> : "+ datos[36]
+            addTituloNegrita('p','divHistorialCmano', textoObs,'sinclase',"")
+          }
+
+        }
+        //Contabilizado
+        if(datos[37]!="" ||datos[38]!=""){
+          addDiv('divHistorialContainerGlobal','divHistorialContabilizado','btnEstadoContabilizada clase100ancho')
+          if(datos[37]!=""){
+            let textoFecha="<b>Contabilizada</b> : "+ datos[37].slice(0, -3);
+            addTituloNegrita('p','divHistorialContabilizado', textoFecha,'sinclase',"")
+          }
+          if(datos[38]!=""){
+            let textoObs="<b>Observaciones</b> : "+ datos[38]
+            addTituloNegrita('p','divHistorialContabilizado', textoObs,'sinclase',"")
+          }
+
+        }
+        //Pendiente de pago
+        if(datos[39]!="" ||datos[40]!=""){
+          addDiv('divHistorialContainerGlobal','divHistorialPendientePago','btnEstadoPendientedepago clase100ancho')
+          if(datos[39]!=""){
+            let textoFecha="<b>Pendiente de pago</b> : "+ datos[39].slice(0, -3);
+            addTituloNegrita('p','divHistorialPendientePago', textoFecha,'sinclase',"")
+          }
+          if(datos[40]!=""){
+            let textoObs="<b>Observaciones</b> : "+ datos[40]
+            addTituloNegrita('p','divHistorialPendientePago', textoObs,'sinclase',"")
+          }
+
+
+        }
+        //pagado
+        if(datos[41]!="" || datos[42]!="" || datos[43]!=""){
+          addDiv('divHistorialContainerGlobal','divHistorialPagado','btnEstadoPagada clase100ancho')
+
+          if(datos[41]!=""){
+            let textoFecha="<b>Pagada</b> : "+ datos[41].slice(0, -3);
+            addTituloNegrita('p','divHistorialPagado', textoFecha,'sinclase',"")
+          }
+          if(datos[42]!=""){
+            let textoObs="<b>Observaciones</b> : "+ datos[42]
+            addTituloNegrita('p','divHistorialPagado', textoObs,'sinclase',"")
+          }
+          if(datos[43]!=""){
+            let usuario="<b>Usuario</b> : "+ datos[43]
+            addTituloNegrita('p','divHistorialPagado', usuario,'sinclase',"")
+          }
+
+        }
+
+
+
+
+
+        addDiv('formularioParte3','carrusel-FacturaContabilizar','flexCCC anchoMax')
+        addDiv('formularioParte3','carrusel-AlbaranesContabilizar','flexCCC anchoMax')
+        var carruselFactura = $("#carrusel-FacturaContabilizar");
+        var carruselAlbaranes = $("#carrusel-AlbaranesContabilizar");
+
+        if(datos[12] =="Aun sin firmar"){
+          var enlaceFactura = generarEnlacesGoogleDrivePrueba(datos[9], 'pdf');
+          addFrame(carruselFactura,enlaceFactura,'Factura: '+[datos[9]],1,'','idIfremFirma','anchoMax')
+        }else{
+          var enlaceFactura = generarEnlacesGoogleDrivePrueba(datos[12], 'pdf');
+          addFrame(carruselFactura,enlaceFactura,'Factura: '+datos[12],1,'idIfremFirma','anchoMax')
+        }
+
+        if(datos[13]=="Sin albaranes"){
+        }else{
+          var tt=JSON.parse(datos[13])
+          for (let i = 0; i < tt.length; i++) {
+            const elementoExterno = tt[i];    
+            for (const clave in elementoExterno) {
+              if (elementoExterno.hasOwnProperty(clave)) {
+                const elementoInterno  = elementoExterno[clave];
+                //addFrame(carruselFactura,enlaceFactura,'Factura: '+datos[13],1,'')
+                addFrame(carruselAlbaranes,[elementoInterno.urlArchivoAlbaran],'Factura: '+clave,1,'','idIfremAlbaranes','anchoMax')
+              }
+            }
+          }
+        }
+        addBoton('contenedorBotones','btnActualizarSage','waves-effect waves-light btn anchoMax btnAceptar',"contabilizarMano(formularioContabilizacion)",'Contabilizar a mano',false)
+        addBoton('contenedorBotones','btnContabilizarSage','waves-effect waves-light btn anchoMax btnAceptar',"contabilizarSage(formularioContabilizacion)",'Contabilizar SAGE',true)
+        M.updateTextFields();
+        abrirModal("modalGeneral")
+  }
+
+    function modalParaResto(datos){
+
+
+        var objetoProveedor =JSON.parse(datos[16])
+
+
+        var proveedor = ['']
+        var btnContabilizarSage = document.getElementById("btnContabilizarSage");
+        //Datos para el dataList
+        var arrayUc=datos[18].split(',')
+        var unidadDeCoste = arrayUc
+
+        configurarModal('modalGeneral','contenidoM','modalMax','modalPeq','modalMed','max')
+        addDiv('encabezadoModal','divTituloInfo','anchoMax')
+        addTitulo('h5','divTituloInfo','Factura: '+datos[1],'titulosColorBeisFacturas classCursorPointer')
+        document.getElementById('divTituloInfo').addEventListener("click", function() {
+            copiarTexto(datos[1]);
+        });
+        //generarIconoMaterial('encabezadoModal')
+        addForm('contenidoGeneral','formularioContabilizacion','formularioModal')
+        addDiv('formularioContabilizacion','formularioParte1','row flexCCC')
+        addDiv('formularioParte1','formularioParte1.1','divInfoFactura')
+        addDiv('formularioParte1','formularioParte1.2','divInfoFactura')
+        addDiv('formularioContabilizacion','divInfoProveedor','row col s12 flexCCC')
+        addDiv('formularioContabilizacion','divHistorial','row col s12 flexCCC')
+        addDiv('contenidoGeneral','formularioParte3','row flexSW anchoMax')
+
+        addTitulo('h5','formularioParte1.1','Info. Factura','center')
+        // addInput('formularioParte1.2','idFacturaContabilizar','text','Id factura','campoRellenable','col s12 m4 l2 input-field ocultar','retornoInput',true).value=datos[2]
+        // addInput('formularioParte1.2','idFactura','text','Id factura','campoRellenable','col s12 m4 l2 input-field','retornoInput',true).value=datos[1]
+        // addInput('formularioParte1.2','estadoFactura','text','Estado','campoRellenable','col s12 m4 l2 input-field','retornoInput',true).value=datos[10]
+        // addInput('formularioParte1.2','usuarioFactura','text','Usuario','campoRellenable','col s12 m4 l2 input-field','retornoInput',true).value=datos[5]
+        // addInput('formularioParte1.2','nExpedienteFactura','text','N Expediente','campoRellenable','col s12 m4 l2 input-field','retornoInput',true).value=datos[3]
+        // addInput('formularioParte1.2','cuantiaFactura','text','Cuantía','campoRellenable','col s12 m4 l2 input-field','retornoInput',true).value=datos[7]
+        // addInput('formularioParte1.2','fechaFactura1','date','Fecha factura','campoRellenable','col s12 m4 l2 input-field','retornoInput',true).value=datos[4]
+        addDivMostrarDatosFactura('formularioParte1.2', 'DivInfoFactura'+'idFacturaContabilizar', 'addDivMostrarDatosFacturaClase', 'ID Innovación', datos[2]);
+        addDivMostrarDatosFactura('formularioParte1.2', 'DivInfoFactura'+'idFactura', 'addDivMostrarDatosFacturaClase', 'Nº Factura', datos[1]);
+        addDivMostrarDatosFactura('formularioParte1.2', 'DivInfoFactura'+'estadoFactura', 'addDivMostrarDatosFacturaClase', 'Estado', datos[10]);
+        addDivMostrarDatosFactura('formularioParte1.2', 'DivInfoFactura'+'usuarioFactura', 'addDivMostrarDatosFacturaClase', 'Usuario', datos[6]);
+        addDivMostrarDatosFactura('formularioParte1.2', 'DivInfoFactura'+'nExpedienteFactura', 'addDivMostrarDatosFacturaClase', 'N Expediente', datos[3]);
+        addDivMostrarDatosFactura('formularioParte1.2', 'DivInfoFactura'+'cuantiaFactura', 'addDivMostrarDatosFacturaClase', 'Cuantía', datos[7]);
+        addDivMostrarDatosFactura('formularioParte1.2', 'DivInfoFactura'+'fechaFactura1', 'addDivMostrarDatosFacturaClase', 'Fecha factura', datos[4].split(" ")[0]);
+         addDivMostrarDatosFactura('formularioParte1.2', 'DivInfoFactura'+'cuentaProvedor6', 'addDivMostrarDatosFacturaClase', 'cuentaProvedor6', datos[22]);
+
+
+        document.getElementById('divInfoProveedor').innerHTML=''
+        // Obtén el valor seleccionado
+        var tipoContrato = datosCombinados[datos[3]];
+        var asunto = datosCombinados[datos[3]] ? datosCombinados[datos[3]].asunto : 'Sin asunto';
+        var email = objetoProveedor && objetoProveedor.email ? objetoProveedor.email : 'Sin email';
+        var cif = objetoProveedor && objetoProveedor.cif ? objetoProveedor.cif : 'Sin CIF';
+        var razon = objetoProveedor && objetoProveedor.razon ? objetoProveedor.razon : 'Sin razon social';
+
+        // Aquí puedes realizar acciones con el valor seleccionado, como cargar datos
+        addTitulo('h5', 'divInfoProveedor', 'Info. Proveedor');
+        addDiv('divInfoProveedor','divInfo','divInfoFactura')
+
+        // addInput('divInfo','asuntoProveedor','text','Asunto','campoRellenable','col s12 m6 l6 input-field','retornoInput',true).value=asunto
+        // addInput('divInfo','cifProveedor','text','CIF','campoRellenable','col s12 m6 l6 input-field','retornoInput',true).value=cif
+        // addInput('divInfo','emailProveedor','text','Email','campoRellenable','col s12 m6 l6 input-field','retornoInput',true).value=email
+        // addInput('divInfo','razonProveedor','text','Razón social','campoRellenable','col s12 m6 l6 input-field','retornoInput',true).value=razon
+
+        addDivMostrarDatosFactura('divInfo', 'DivInfoFactura'+'Asunto', 'addDivMostrarDatosFacturaClase', 'Asunto', asunto);
+        addDivMostrarDatosFactura('divInfo', 'DivInfoFactura'+'CIF', 'addDivMostrarDatosFacturaClase', 'CIF', cif);
+        addDivMostrarDatosFactura('divInfo', 'DivInfoFactura'+'Email', 'addDivMostrarDatosFacturaClase', 'Email', email);
+        addDivMostrarDatosFactura('divInfo', 'DivInfoFactura'+'Razonsocial', 'addDivMostrarDatosFacturaClase', 'Razón social', razon);
+
+        addDivMostrarDatosFactura('divInfo', 'DivInfoFactura'+'cuentaProvedor4', 'addDivMostrarDatosFacturaClase', 'cuentaProvedor4', datos[21]);
+
+        addDiv('divHistorial','divHistorialContainerGlobal','divHistorialContainerGlobalClase')
+         
+        //Rechazado
+        if(datos[32]!="" ||datos[17]!="-"){
+          addDiv('divHistorialContainerGlobal','divHistorialRechazado','btnEstadoRechazado clase100ancho')
+          if(datos[32]!=""){
+            let textoFecha="<b>Rechazada</b> : "+ datos[32].slice(0, -3);
+            addTituloNegrita('p','divHistorialRechazado', textoFecha,'sinclase',"")
+          }
+          if(datos[17]!="-"){
+            let textoObs="<b>Observaciones</b> : "+ datos[17]
+            addTituloNegrita('p','divHistorialRechazado', textoObs,'sinclase',"")
+          }
+        }
+        //Pendiente de Revision
+        if(datos[0]!="" ||datos[8]!=""){
+          addDiv('divHistorialContainerGlobal','divHistorialPendienteRevision','btnEstadoPendienteRevision clase100ancho')
+          if(datos[0]!=""){
+            let textoFecha="<b>Solicitud</b> : "+ datos[0].slice(0, -3);
+            addTituloNegrita('p','divHistorialPendienteRevision', textoFecha,'sinclase',"")
+          }
+          if(datos[8]!=""){
+            let textoObs="<b>Observaciones</b> : "+ datos[8]
+            addTituloNegrita('p','divHistorialPendienteRevision', textoObs,'sinclase',"")
+          }
+
+        }
+        //Firmado
+        if(datos[33]!="" ||datos[34]!=""){
+          addDiv('divHistorialContainerGlobal','divHistorialFirmado','btnEstadoFirmado clase100ancho')
+          if(datos[33]!=""){
+            let textoFecha="<b>Firmado</b> : "+ datos[33].slice(0, -3);
+            addTituloNegrita('p','divHistorialFirmado', textoFecha,'sinclase',"")
+          }
+          if(datos[34]!=""){
+            let textoObs="<b>Observaciones</b> : "+ datos[34]
+            addTituloNegrita('p','divHistorialFirmado', textoObs,'sinclase',"")
+          }
+
+        }
+        //Contabalizado a mano
+        if(datos[35]!="" ||datos[36]!=""){
+          addDiv('divHistorialContainerGlobal','divHistorialCmano','btnEstadoContabilizadoAMano clase100ancho')
+          if(datos[35]!=""){
+            console.log("datos[35] "+datos[35])
+            console.log(" typeof datos[35] "+ typeof datos[35])
+            let textoFecha="<b>C.Mano</b> : "+ datos[35].slice(0, -3);
+            addTituloNegrita('p','divHistorialCmano', textoFecha,'sinclase',"")
+          }
+          if(datos[36]!=""){
+            let textoObs="<b>Observaciones</b> : "+ datos[36]
+            addTituloNegrita('p','divHistorialCmano', textoObs,'sinclase',"")
+          }
+
+        }
+        //Contabalizado
+        if(datos[37]!="" ||datos[38]!=""){
+          addDiv('divHistorialContainerGlobal','divHistorialContabilizado','btnEstadoContabilizada clase100ancho')
+          if(datos[37]!=""){
+            let textoFecha="<b>Contabilizada</b> : "+ datos[37].slice(0, -3);
+            addTituloNegrita('p','divHistorialContabilizado', textoFecha,'sinclase',"")
+          }
+          if(datos[38]!=""){
+            let textoObs="<b>Observaciones</b> : "+ datos[38]
+            addTituloNegrita('p','divHistorialContabilizado', textoObs,'sinclase',"")
+          }
+
+        }
+        //Pendiente de pago
+        if(datos[39]!="" ||datos[40]!=""){
+          addDiv('divHistorialContainerGlobal','divHistorialPendientePago','btnEstadoPendientedepago clase100ancho')
+          if(datos[39]!=""){
+            let textoFecha="<b>Pendiente de pago</b> : "+ datos[39].slice(0, -3);
+            addTituloNegrita('p','divHistorialPendientePago', textoFecha,'sinclase',"")
+          }
+          if(datos[40]!=""){
+            let textoObs="<b>Observaciones</b> : "+ datos[40]
+            addTituloNegrita('p','divHistorialPendientePago', textoObs,'sinclase',"")
+          }
+
+
+        }
+        //pagado
+        if(datos[41]!="" || datos[42]!="" || datos[43]!=""){
+          addDiv('divHistorialContainerGlobal','divHistorialPagado','btnEstadoPagada clase100ancho')
+
+          if(datos[41]!=""){
+            let textoFecha="<b>Pagada</b> : "+ datos[41].slice(0, -3);
+            addTituloNegrita('p','divHistorialPagado', textoFecha,'sinclase',"")
+          }
+          if(datos[42]!=""){
+            let textoObs="<b>Observaciones</b> : "+ datos[42]
+            addTituloNegrita('p','divHistorialPagado', textoObs,'sinclase',"")
+          }
+          if(datos[43]!=""){
+            let usuario="<b>Usuario</b> : "+ datos[43]
+            addTituloNegrita('p','divHistorialPagado', usuario,'sinclase',"")
+          }
+
+        }
+
+
+        addDiv('formularioParte3','carrusel-FacturaContabilizar','flexCCC anchoMax')
+        addDiv('formularioParte3','carrusel-AlbaranesContabilizar','flexCCC anchoMax')
+        var carruselFactura = $("#carrusel-FacturaContabilizar");
+        var carruselAlbaranes = $("#carrusel-AlbaranesContabilizar");
+
+        if(datos[12] =="Aun sin firmar"){
+          var enlaceFactura = generarEnlacesGoogleDrivePrueba(datos[9], 'pdf');
+          addFrame(carruselFactura,enlaceFactura,'Factura: '+[datos[9]],1,'','idIfremFirma','anchoMax')
+        }else{
+          var enlaceFactura = generarEnlacesGoogleDrivePrueba(datos[12], 'pdf');
+          addFrame(carruselFactura,enlaceFactura,'Factura: '+datos[12],1,'idIfremFirma','anchoMax')
+        }
+
+        if(datos[13]=="Sin albaranes" || "" || null){
+        }else{
+          var tt=JSON.parse(datos[13])
+          for (let i = 0; i < tt.length; i++) {
+            const elementoExterno = tt[i];    
+            for (const clave in elementoExterno) {
+              if (elementoExterno.hasOwnProperty(clave)) {
+                const elementoInterno  = elementoExterno[clave];
+                //addFrame(carruselFactura,enlaceFactura,'Factura: '+datos[13],1,'')
+                addFrame(carruselAlbaranes,[elementoInterno.urlArchivoAlbaran],'Factura: '+clave,1,'','idIfremAlbaranes','anchoMax')
+              }
+            }
+          }
+        }
+        if( datos[10] !="Rechazado" && datos[10] !="Pagada"){
+          addBoton('contenedorBotones', 'btnpagado', 'waves-effect btn anchoMax btnAceptar', "pagarAManoJS('/" + datos[2] + "/')", 'PAGADO', false);
+        }
+        M.updateTextFields();
+        abrirModal("modalGeneral")
+  }
+
+function pagarAManoJS(idFactura){
+
+  Swal.fire({
+    title: 'Esta a punto de pagarlo a mano',
+    html: '<br><textarea id="observacionesswal" placeholder="Observaciones (opcional)"></textarea>',
+    focusConfirm: false,
+    showCancelButton: true,
+    confirmButtonText: 'Pagar a mano',
+    cancelButtonText: 'Volver',
+    preConfirm: () => {
+
+      var arrayEnviar = [idFactura,document.getElementById('observacionesswal').value]
+      mostrarOcultarLoaderGeneral('cargaEnvioGeneral','textoCargaGeneral',"Pagando",'ocultarImportant','carga')
+      google.script.run
+      .withSuccessHandler(function (value) {
+        var mensaje = ''
+        mensaje +="Pagada a mano:\n" 
+        mostrarOcultarLoaderGeneral('cargaEnvioGeneral','textoCargaGeneral',"",'carga','ocultarImportant')
+        cerrarModal('modalGeneral')
+        generarAviso('Pagada a mano!','success',false,false,mensaje)
+        google.script.run
+        .withSuccessHandler(function (value) {
+            actualizarTablasFacturas(value)
+        }).obtenerDatosTablaBQ(datosFirma1, true); 
+      }).pagarAManoGS(arrayEnviar);
+
+    }
+  });
+
+
+
+
+  
+}
+</script>
+<!---------------ABRIR MODAL INFO PROVEEDOR -------------------------------------------------->
+<script>
+  function abrirModalInfoProveedor(datos){
+    var objetoProveedor =JSON.parse(datos[16])
+    configurarModal('modalGeneral','contenidoM','modalMax','modalPeq','modalMed','max')
+    //Añadimos titulo a al encabezado del modal
+    addDiv('encabezadoModal','divTituloInfo','anchoMax')
+    addTitulo('h5','divTituloInfo','Info proveedor','negrita center')
+    generarIconoMaterial('encabezadoModal')
+    //Añadimos btn del modal
+    addBoton('contenedorBotones','btnSolicitarFirmaFactura','waves-effect waves-light btn anchoMax btnAperturaModal',"cerrarModal('modalGeneral')",'Cerrar')
+    //Añadimos un formulario
+    addForm('contenidoGeneral','formularioGeneral','formularioModal')
+    //contenedores del formulario
+    addDiv('formularioGeneral','divInfoProveedor','row col s12 flexCCC')
+    document.getElementById('divInfoProveedor').innerHTML=''
+    //Añdimos titulo y div
+    addTitulo('h5', 'divInfoProveedor', 'Info. Proveedor');
+    addDiv('divInfoProveedor','divInfo','row flexSW col s12 m12 l12')
+    //Añdimos los inputs necesarios
+    addInput('divInfo','razonProveedor','text','Razon','campoNoRellenable','col s12 m6 l4 input-field','retornoInput',true).value=objetoProveedor.razon
+    addInput('divInfo','cifProveedor','text','CIF','campoNoRellenable','col s12 m6 l4 input-field','retornoInput',true).value=objetoProveedor.cif
+    // addInput('divInfo','emailResponsableContrato','text','RC','campoNoRellenable','col s12 m6 l4 input-field','retornoInput',true).value=objetoProveedor.responsable
+    addInput('divInfo','asuntoProveedor','text','Asunto','campoNoRellenable','col s12 m6 l6 input-field','retornoInput',true).value=objetoProveedor.asunto
+    addInput('divInfo','emailProveedor','text','Email','campoNoRellenable','col s12 m6 l6 input-field','retornoInput',true).value=objetoProveedor.email
+    M.updateTextFields();
+    //Abrimos el modal   
+    abrirModal("modalGeneral")   
+  }
+</script>

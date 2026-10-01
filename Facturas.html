@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Pedidos</title>
+  <base target="_top">
+  <!------------------------IMPORTACIONES CSS------------------------------------->
+  <?!= include('000IMPORTACIONIDIOMAESPAÑO');?>
+  <?!= include('000IMPORTACIONESMATERIALIZECSS');?>
+  <?!= include('000IMPORTACIONESTABLASCSS');?>
+  <?!= include('1ComponenteFooterCSS');?>
+  <?!= include('1ComponenteNavBarCSS');?>
+  <?!= include('0GLOBALCSS');?>
+  <?!= include('1ComponenteImgCSS');?>
+  <?!= include('0GLOBALMODALCSS');?>
+  <?!= include('0GLOBALTABLACSS');?>
+</head>
+
+<body>
+  <!-----------------------------NAVBAR.   ------------------------------------------->
+  <?!= include('1ComponenteNavBar');?> 
+    
+  
+
+  <!-----------------------CONTENIDO PRINCIPAL------------------------------------>
+  <div id='contenidoPrincipal'>
+  </div>
+  <!-- Elemento superpuesto -->
+  <div id="elementoSuperpuesto" class="superpuesto">
+    <p id="textoNotificacion">Procesando...</p>
+  </div>
+  <!----------------------------FOOTER-------------------------------------------->
+  <?!= include('1ComponenteFooter');?>
+  <?!= include('2ModalGeneral');?>
+  <!------------------------IMPORTACIONES JS-------------------------------------->
+  <?!= include('000IMPORTACIONESMATERIALIZEJS');?>
+  <?!= include('000IMPORTACIONESTABLASJS');?>
+  <?!= include('0COMPONENTESMATERIALIZE');?>
+  <!---------------------------JS GLOABAL----------------------------------------->
+  <?!= include('Variables');?>
+   <?!= include('0GLOBALJS');?> 
+
+  <script>
+    var usuarioString = '<?= usuario ?>';
+    var usuariosString = '<?= usuarios ?>';
+    var facturasRealizarString = '<?= facturasRealizar ?>';
+    var facturasSolicitarString = '<?= facturasSolicitar ?>'
+    var objetoControlGString = '<?= objetoControlG ?>'
+    var urlAppJSONString = '<?= urlAppJSON ?>'
+    var objetoUrl = "";  
+    //var objetoUrl = JSON.parse(urlAppJSONString);  
+    
+    // generarElementoLista('Pedidos',objetoUrl[1][1],'shopping_cart','Pedidos')
+    // generarElementoLista('Realizar Presupuesto',objetoUrl[1][1],'attach_money','RealizarPresupuesto')
+    // generarElementoLista('ContratoMenor',objetoUrl[1][1],'description','ContratoMenor')
+    // generarElementoLista('NotaGasto',objetoUrl[1][1],'receipt','NotaGasto')
+    // generarElementoLista('Facturas',rutaApp,'monetization_on','Facturas')
+    var usuario = JSON.parse(usuarioString);  
+
+  </script>
+  <?!= include('ObtenerDatosJS');?>
+  <?!= include('UsuarioJS');?>
+  <?!= include('FacturasJS');?>
+  <?!= include('1ComponenteImgJS');?>
+  <?!= include('2ModalBtnsJs');?> 
+  <?!= include('3TablasFacturasJS');?> 
+</body>
+
+</html>

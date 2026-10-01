@@ -1,0 +1,129 @@
+<!-- CSS NAVBAR -->
+<style>
+  .encabezadoNav {
+    display: flex;
+    flex-direction: row;
+    align-items: center
+  }
+
+  .seccionNavI {
+    width: 50%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+  }
+
+  .seccionNavD {
+    width: 50%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+  }
+
+  /*--Identificador operativa--*/
+  .text-header {
+    float: left;
+    margin-right: 20px;
+  }
+
+  /*--ttitulo app--*/
+  .titulo-header {
+    float: right;
+  }
+
+  /*--Logo esmasa--*/
+  .logo-header {
+    float: right;
+    height: 100%;
+    /* Altura igual al elemento nav */
+    max-height: 100%;
+    /* Altura máxima igual al elemento nav */
+  }
+
+  /*--Nab web--*/
+  .nav-wrapper {
+    //background-color: #35c3fb;
+    background-color: #6A2181;
+
+
+  }
+
+  #navMovilSuperior {
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+  }
+
+  #usuario {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-evenly;
+  }
+
+  /*--Nav movil--*/
+  #nav-mobile {
+    color: #fff;
+    //background-color: #35c3fb;
+    background-color: #6A2181;
+
+  }
+
+  /*--Titulo color--*/
+  #nav-mobile a {
+    color: #fff;
+  }
+
+  /*--Iconos de nav-mobile color--*/
+  #nav-mobile i {
+    color: black;
+  }
+
+  #menu {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  /* Estilos específicos para pantallas con ancho menor a 430 píxeles  ocultamos el titulo de la app */
+  @media only screen and (max-width: 430px) {
+    #tituloNav {
+      display: none;
+    }
+  }
+
+  .margenIzquierdo {
+    margin-left: 20px;
+  }
+
+  .sidenav {
+    width: 320px !important;
+  }
+</style>
+<!-- CSS NOTIFICACIONES -->
+<style>
+  .notification-container {
+    position: relative;
+    margin-right: 10px;
+    cursor: pointer;
+  }
+
+  .notification-badge {
+    position: absolute;
+    top: -15px;
+    right: -10px;
+    background-color: red;
+    color: white;
+    border-radius: 50%;
+    padding: 3px 6px;
+    font-size: 12px;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+  }
+</style>

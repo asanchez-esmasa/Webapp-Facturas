@@ -1,0 +1,447 @@
+<!-- Al cargar el DOM añadimos un div que contiene un 3 btns  y el contedor de las dos tablas y sus titulos y elemento de carga-->
+<script>
+  // Asegurándose de que el DOM esté completamente cargado antes de ejecutar el código dentro de esta función
+  document.addEventListener('DOMContentLoaded', function() {
+  // Crear un div con id 'contenidoPrincipal', clases 'contenidoBtnsHtml' y 'container center flexRCEC'
+  addDiv('contenidoPrincipal', 'contenidoBtnsHtml', 'container center flexRCEC');
+
+  // Crear un botón con id 'btnCerrarAbrirTablaAllFacturas', clases 'btn btnAperturaModal btnModalInicio btn1',y llamar a la función 'cerrarAbrir(false)' cuando se haga clic. El texto del botón es 'Facturas'
+  addBoton('contenidoBtnsHtml', 'btnCerrarAbrirTablaAllFacturas', 'btn btnAperturaModal btnApp btn1', 'cerrarAbrirTablas(false)', 'Facturas',false,false,'','');
+
+  // Crear otro botón con id 'btnAbrirModalFormulario', clases 'btn btnAperturaModal btnModalInicio btn1',y llamar a la función 'abrirModalSolicitudFirma()' cuando se haga clic. El texto del botón es 'Solicitar firma factura'
+  addBoton('contenidoBtnsHtml', 'btnAbrirModalFormulario', 'btn btnAperturaModal btnApp btn1', 'abrirModalSolicitudFirma()', 'Solicitar firma factura',false,false,'','');
+
+  // Crear otro botón con id 'btnCerrarAbrirTabla', clases 'btn btnAperturaModal btnModalInicio btn1', 
+  // y llamar a la función 'cerrarAbrir(true)' cuando se haga clic. El texto del botón es 'Pendientes de firmar'
+  addBoton('contenidoBtnsHtml', 'btnCerrarAbrirTabla', 'btn btnAperturaModal btnApp btn1', 'cerrarAbrirTablas(true)', 'Pendientes de firmar',false,false,'','');
+
+  // Crear otro botón con id 'btnCerrarAbrirTabla', clases 'btn btnAperturaModal btnModalInicio btn1', 
+  // y llamar a la función 'cerrarAbrir(true)' cuando se haga clic. El texto del botón es 'Pendientes de firmar'
+  addBoton('contenidoBtnsHtml', 'btnVerTodasLasFacturas', 'btn btnAperturaModal btnApp btn1', 'verTodasLasFacturas()', 'Ver todas las facturas',false,false,'','');
+  
+  // Crear un div con id 'contenedorTablas' y clases 'dosTablas anchoMax ocultarImportant'
+  addDiv('contenidoPrincipal','contenedorTablas', 'dosTablas anchoMax ocultarImportant');
+
+  // Crear dos divs con ids 'contenedorTabla1' y 'contenedorTabla2', ambos con clases 'flexCCC anchoTablas90'
+  addDiv('contenedorTablas', 'contenedorTabla1', 'flexCCC anchoTablas90 ocultarImportant');
+  addDiv('contenedorTablas', 'contenedorTabla2', 'flexCCC anchoTablas90 ocultarImportant');
+
+
+  // Agregar un título 'h5' al div con id 'contenedorTabla1' con el texto 'Facturas' y alineación 'center'
+  addTitulo('h5', 'contenedorTabla1', 'Facturas','negrita center');
+
+  // Agregar otro título 'h5' al div con id 'contenedorTabla2' con el texto 'Pendientes de firmar' y alineación 'center'
+  addTitulo('h5', 'contenedorTabla2', 'Pendientes de firmar','negrita center');
+
+  // Agregar una tabla con id 'tablaContabilizar' al div con id 'contenedorTabla1' y clase 'display cell-border'
+  addTabla('contenedorTabla1', 'tablaContabilizar', 'display cell-border');
+
+  // Agregar otra tabla con id 'tablaControlSolicitudFirma' al div con id 'contenedorTabla2' y clase 'display cell-border'
+  addTabla('contenedorTabla2', 'tablaControlSolicitudFirma', 'display cell-border');
+
+  // Generar un elemento de carga con id 'contenedorLoad' y texto 'Cargando facturas' en el div con id 'contenidoPrincipal'
+  generarElementoCarga('contenidoPrincipal',"contenedorLoad", "Cargando facturas");
+});
+
+</script>
+<!-- Btn ver todas las facturas-->
+<script>
+  function verTodasLasFacturas(){
+    if(arrayFacturas){
+      //Añadimos o quitmos clase para configurar el tamaño del modal y del contenido del modal
+      document.getElementById('modalGeneral').classList.add('modalMax')
+      document.getElementById('modalGeneral').classList.remove('modalPeq')
+      document.getElementById('modalGeneral').classList.remove('modalMed')
+      document.getElementById('contenidoM').classList.add('max')
+      //Eliminamos el contenido del encabezado
+      document.getElementById('encabezadoModal').innerHTML=''
+      //Contenedores principales donde vamos a cargar los elmentos, lo vaciamos
+      document.getElementById('contenidoGeneral').innerHTML=''
+      document.getElementById('contenedorBotones').innerHTML=''
+      //document.getElementById('encabezadoGeneral').innerHTML='Solicitar firma factura'
+      //Añadimos titulo a al encabezado del modal
+      addDiv('encabezadoModal','divTituloInfo','anchoMax')
+      addTitulo('h5','divTituloInfo','Ver todas las facturas','negrita center')
+      generarIconoMaterial('encabezadoModal')
+      //Añadimos btn del modal
+      addBoton('contenedorBotones','btnSolicitarFirmaFactura','waves-effect waves-light btn anchoMax btnRechazar',"cerrarModal('modalGeneral')",'Cerrar',false,'','')
+      //Añadimos un formulario
+      addCarrusel('contenidoGeneral')
+      var carruselFactura =document.getElementById('iframe-container')
+      //const enlaces = arrayFacturas.filter(item => /^https?:\/\/[^\s/$.?#].[^\s]*$/.test(item));
+      const enlaces = obtenerLinksDesdeTabla();
+      console.log("enlaces lengt" + enlaces.length)
+      if(enlaces.length>0){
+        // Utilizar la función addFrame con la información del albarán
+        console.log("addFrame1")
+        addFrame(carruselFactura, enlaces, ``, 1, '','iframe-slide'); 
+        console.log("addFrame2")
+        abrirModal("modalGeneral")
+        const iframes = document.querySelectorAll('.iframe-slide');
+        console.log("iframes1")
+        updateSlideVisibility(iframes)  
+        console.log("iframes2") 
+      } else {
+        generarAviso('¡No hay facturas!','error',false,false,'Para visualizar todos los albaranes, debemos seleccionar mínimo uno')
+      }
+    }else{
+      generarAviso('¡Faltan datos por cargar!','error',false,false,'Falta informacion de las facturas por cargar')
+    }
+  }
+
+function obtenerLinksDesdeTabla() {
+  var links = [];
+  
+  // Comprobar si el elemento con ID "contenedorTabla2" existe y tiene la clase "ocultarImportant"
+  var contenedorTabla2 = document.getElementById("contenedorTabla2");
+  var contenedorTabla1 = document.getElementById("contenedorTabla1");
+
+  if (contenedorTabla2 && !contenedorTabla2.classList.contains("ocultarImportant")) {
+      // Obtener la tabla con ID "tablaControlSolicitudFirma"
+      var tablaControlSolicitudFirma = document.getElementById("tablaControlSolicitudFirma");
+      if (tablaControlSolicitudFirma) {
+          // Obtener todas las filas (tr) del tbody de la tabla
+          var filas = tablaControlSolicitudFirma.getElementsByTagName("tr");
+          for (var i = 0; i < filas.length; i++) {
+              // Obtener el segundo td de cada fila
+              var segundoTd = filas[i].getElementsByTagName("td")[1];
+              if (segundoTd) {
+                  // Obtener el enlace dentro del segundo td
+                  var enlace = segundoTd.querySelector("a.enviarCorreo");
+                  if (enlace) {
+                      // Obtener el valor del atributo href del enlace y añadirlo al array de links
+                      var link = enlace.getAttribute("href");
+                      links.push(link);
+                  }
+              }
+          }
+      }
+  }
+
+  if (contenedorTabla1 && !contenedorTabla1.classList.contains("ocultarImportant")) {
+    console.log("entra contenedorTabla1")
+      // Obtener la tabla con ID "tablaControlSolicitudFirma"
+      var tablaContabilizar = document.getElementById("tablaContabilizar");
+      if (tablaContabilizar) {
+          // Obtener todas las filas (tr) del tbody de la tabla
+          var filas = tablaContabilizar.getElementsByTagName("tr");
+          for (var i = 0; i < filas.length; i++) {
+              // Obtener el segundo td de cada fila
+              var segundoTd = filas[i].getElementsByTagName("td")[1];
+              if (segundoTd) {
+                  // Obtener el enlace dentro del segundo td
+                  var enlace = segundoTd.querySelector("a.enviarCorreo");
+                  console.log("enlaces "+i +" - "+enlace)
+                  if (enlace) {
+                      // Obtener el valor del atributo href del enlace y añadirlo al array de links
+                      var link = enlace.getAttribute("href");
+                      links.push(link);
+                  }
+              }
+          }
+      }
+  }
+  console.log("links "+links)
+
+  return links;
+}
+
+// Función para convertir el texto del TD a un número correcto
+function convertirATextoANumero(texto) {
+    // Eliminar los puntos de miles y reemplazar las comas por puntos
+    var textoModificado = texto.replace(/\./g, '').replace(/,/g, '.');
+    return parseFloat(textoModificado);
+}
+// Función para formatear el número
+function formatearNumeroEuros(numero) {
+    var partes = numero.toFixed(3).split('.'); // Dividir en parte entera y decimal
+    var parteEntera = partes[0];
+    var parteDecimal = partes[1];
+
+    // Formatear parte entera con puntos para los miles
+    var parteEnteraFormateada = '';
+    while (parteEntera.length > 3) {
+        parteEnteraFormateada = '.' + parteEntera.slice(-3) + parteEnteraFormateada;
+        parteEntera = parteEntera.slice(0, -3);
+    }
+    parteEnteraFormateada = parteEntera + parteEnteraFormateada;
+    // Limitar la parte decimal a 2 dígitos
+    parteDecimal = parteDecimal.slice(0, 2);
+
+    // Juntar parte entera y decimal con coma
+    return parteEnteraFormateada + ',' + parteDecimal+ ' €';
+}
+
+function obtenerCantidadPrecioSumaDesdeTabla() {
+    var cantidadPrecioSuma = 0;
+
+    // Comprobar si el elemento con ID "contenedorTabla2" existe y tiene la clase "ocultarImportant"
+    var contenedorTabla2 = document.getElementById("contenedorTabla2");
+    var contenedorTabla1 = document.getElementById("contenedorTabla1");
+
+    if (contenedorTabla2 && !contenedorTabla2.classList.contains("ocultarImportant")) {
+        // Obtener la tabla con ID "tablaControlSolicitudFirma"
+        var tablaControlSolicitudFirma = document.getElementById("tablaControlSolicitudFirma");
+        if (tablaControlSolicitudFirma) {
+            // Obtener todas las filas (tr) del tbody de la tabla
+            var filas = tablaControlSolicitudFirma.getElementsByTagName("tr");
+            for (var i = 0; i < filas.length; i++) {
+                // Obtener el octavo td de cada fila
+                var octavoTd = filas[i].getElementsByTagName("td")[7]; //CAMBIAR ESTE NUMERO SI SE MODICAN TABLAS ES EL QUE DICE QUE COLUMA ES
+                if (octavoTd) {
+                    var valor = convertirATextoANumero(octavoTd.textContent);
+                    if (!isNaN(valor)) {
+                        cantidadPrecioSuma += valor;
+                        console.log("valor " + valor);
+                        console.log("CantidadPrecioSuma " + cantidadPrecioSuma);
+                    }
+                }
+            }
+        }
+    }
+
+    if (contenedorTabla1 && !contenedorTabla1.classList.contains("ocultarImportant")) {
+        console.log("entra contenedorTabla1");
+        // Obtener la tabla con ID "tablaContabilizar"
+        var tablaContabilizar = document.getElementById("tablaContabilizar");
+        if (tablaContabilizar) {
+            // Obtener todas las filas (tr) del tbody de la tabla
+            var filas = tablaContabilizar.getElementsByTagName("tr");
+            for (var i = 0; i < filas.length; i++) {
+                // Obtener el décimo td de cada fila
+                var decimoTd = filas[i].getElementsByTagName("td")[9]; //CAMBIAR ESTE NUMERO SI SE MODICAN TABLAS ES EL QUE DICE QUE COLUMA ES
+                if (decimoTd) {
+                    var valor = convertirATextoANumero(decimoTd.textContent);
+                    if (!isNaN(valor)) {
+                        cantidadPrecioSuma += valor;
+                        console.log("valor " + valor);
+                        console.log("CantidadPrecioSuma " + cantidadPrecioSuma);
+                    }
+                }
+            }
+        }
+    }
+
+    // Redondear la suma total a 3 decimales
+    cantidadPrecioSuma = parseFloat(cantidadPrecioSuma.toFixed(3));
+    var cantidadPrecioSumaFormateada = formatearNumeroEuros(cantidadPrecioSuma)
+    console.log("cantidadPrecioSumaFormateada " + cantidadPrecioSumaFormateada);
+    return cantidadPrecioSumaFormateada;
+}
+
+</script>
+<!--Btn solicitar firma factura ,limpia el contendo del modal, añade el titulo y btn del modal , en su contendio añade un formualrio que conteine ..., finalizamos abriendo el modal-->
+<script>
+  function abrirModalSolicitudFirma(){
+    //Expedientes
+    var arrayExpedientes 
+    //Correos
+    var arrayCorreos
+    //Usuarios
+    var arrayUsuarios
+    var selectNexpediente
+    var selectUsuarios
+    
+    //Comprobamos si hay expedientes disponibles 
+    if (arrayExpedientesDisponibles !== undefined && arrayExpedientesDisponibles !== null && arrayExpedientesDisponibles !== '') {
+      arrayExpedientes = arrayExpedientesDisponibles
+      arrayExpedientes.push('Sin contrato')
+    }else{
+      arrayExpedientes=[]
+    }
+    //Comprobamos que si hay usuarios
+    if (usuarios !== undefined && usuarios !== null && usuarios !== '') {
+      arrayUsuarios = usuarios.map(function(subarray) {
+        return obtenerNombreUsuario(subarray[2]);
+      });
+      arrayCorreos = usuarios.map(function(subarray) {
+        return subarray[2];
+      });
+    }else{
+      arrayUsuarios=[]
+      arrayCorreos=[]
+    }
+    //Añadimos o quitmos clase para configurar el tamaño del modal y del contenido del modal
+    document.getElementById('modalGeneral').classList.add('modalMax')
+    document.getElementById('modalGeneral').classList.remove('modalPeq')
+    document.getElementById('modalGeneral').classList.remove('modalMed')
+    document.getElementById('contenidoM').classList.add('max')
+    //Eliminamos el contenido del encabezado
+    document.getElementById('encabezadoModal').innerHTML=''
+    //Contenedores principales donde vamos a cargar los elmentos, lo vaciamos
+    document.getElementById('contenidoGeneral').innerHTML=''
+    document.getElementById('contenedorBotones').innerHTML=''
+    //document.getElementById('encabezadoGeneral').innerHTML='Solicitar firma factura'
+    //Añadimos titulo a al encabezado del modal
+    addDiv('encabezadoModal','divTituloInfo','anchoMax')
+    addTitulo('h5','divTituloInfo','Solicitar firma factura','negrita center')
+    generarIconoMaterial('encabezadoModal')
+    //Añadimos btn del modal
+    addBoton('contenedorBotones','btnSolicitarFirmaFactura','waves-effect waves-light btn anchoMax btnAceptar',"solicitarFirmaFactura(formularioGeneral)",'Solicitar firma')
+    //Añadimos un formulario
+    addForm('contenidoGeneral','formularioGeneral','formularioModal')
+    //contenedores del formulario
+    var divDataList=  addDiv('formularioGeneral','datalistSelectExpedientes','flexSW')
+    var divDataList1=  addDiv('formularioGeneral','datalistSelectUsuarios','flexSW')
+    var div1=  addDiv('formularioGeneral','divNexpedienteyUsuario','row flexSW')
+    var div2=  addDiv('formularioGeneral','divInfoProveedor','row col s12 flexCCC')
+    // //Data list expedientes
+    //Comprobamos si hay expedientes disponibles 
+    //console.log("arrayExpedientesDisponibles - "+arrayExpedientesDisponibles)
+    if (arrayExpedientesDisponibles !== undefined && arrayExpedientesDisponibles !== null && arrayExpedientesDisponibles !== '') {
+      selectNexpediente=addSelectDataList('datalistSelectExpedientes','Nº Expediente','selectNexpediente',arrayExpedientes,arrayExpedientes,'datalistoptions1',`input-field descripcion col s12 m4 l2 row`,false,'idLoadNexpediente','idLabelNexpediente')
+    }else{
+      selectNexpediente=addSelectDataList('datalistSelectExpedientes','Nº Expediente','selectNexpediente',arrayExpedientes,arrayExpedientes,'datalistoptions1',`input-field descripcion col s12 m4 l2 row`,true,'idLoadNexpediente','idLabelNexpediente')    
+    }
+    //console.log("arrayCorreos - "+arrayCorreos )
+    //console.log("arrayUsuarios - "+arrayUsuarios )
+    //console.log("arrayExpedientes - "+arrayExpedientes)
+
+    /**  MODIFICACION FRAN CAMBIAR EMAIL POR SIN RESPONSABLE */
+    // Encontrar el índice de "Email"
+      let index = arrayCorreos.indexOf("Email");
+
+      if (index !== -1) {
+         arrayCorreos.splice(index, 1);
+      }
+
+      // Encontrar el índice de "Email"
+      let index2 = arrayUsuarios.indexOf("Email");
+
+      if (index2 !== -1) {
+        arrayUsuarios.splice(index2, 1);
+      }
+
+    //Comprobamos si hay usuarios
+    if (usuarios !== undefined && usuarios !== null && usuarios !== '') {
+      // //Data list usuarios
+      selectUsuarios = addSelectDataList('datalistSelectUsuarios','Enviar a:','selectUsuario',arrayCorreos,arrayUsuarios,'datalistoptions2',`input-field descripcion col s12 m4 l2 row`,false,'idLoadUsuarios','idLabelUsuarios')
+    }else{
+      // //Data list usuarios
+      selectUsuarios = addSelectDataList('datalistSelectUsuarios','Enviar a:','selectUsuario',arrayCorreos,arrayUsuarios,'datalistoptions2',`input-field descripcion col s12 m4 l2 row`,true,'idLoadUsuarios','idLabelUsuarios')
+    }
+    //Campos del formulario
+    addInput('formularioGeneral','idCarpeta','text','Id carpeta','campoNoRellenable','ocultar')
+    addInput('formularioGeneral','infoUsuarioInput','text','Info usuario','campoNoRellenable','ocultar','retornoInput')
+    addInput('divNexpedienteyUsuario','nFactura','text','NºFactura','campoRellenable','col s12 m4 l2 input-field')
+
+    var inputImporte =addInput('formularioGeneral','inporteFactura','number','Importe factura Sin IVA','campoRellenable','col s12 m4 l2 input-field')
+    var inpurtFecha=addInput('formularioGeneral','fechaFactura','date','Fecha factura','campoNoRellenable','col s12 m4 l2 input-field')
+    addInput('formularioGeneral','obsFactura','text','Observaciones','campoNoRellenable','col s12 m12 l12 input-field')
+    generarSwitch('formularioGeneral','checkFirma','No solicitar firma','No solicitar firma', 'textoSwitch flexRCC margenTop15px')
+     document.getElementById('checkFirma').addEventListener('change', function() {
+            if (this.checked) {
+              document.getElementById('selectUsuario').value="Sin responsable"
+              // Volver a inicializar el campo de selección para que se refleje el cambio
+              M.updateTextFields()
+              document.getElementById('selectUsuario').disabled = true; // Deshabilitar el select
+            } else {
+              document.getElementById('selectUsuario').disabled = false; // Deshabilitar el select
+              document.getElementById('selectUsuario').value=""
+              // Volver a inicializar el campo de selección para que se refleje el cambio
+               M.updateTextFields()
+            }
+        });
+    generarSwitch('formularioGeneral','checkInversion','¿Es una inversion?','¿Es una inversion?', 'textoSwitch flexRCC margenTop15px')
+    //Añadimos una entrada de archivo
+    addDiv('formularioGeneral','componentes','flexSW')
+    //Componente img
+
+    crearInputImg('componentes',false,'contenedorArchivosFormulario','tituloFormulario','Adjuntar factura','archivos0','box0','drop_zone0','infoImg0','obj0','listaImg0',"elementoFlex img0",'idArchivoFormulario','formularioGeneral','.pdf')
+
+    //Añadimos los elentos al contenedor
+    div1.appendChild(divDataList);
+    div1.appendChild(divDataList1);
+    div1.appendChild(inpurtFecha);
+    div1.appendChild(inputImporte);
+
+    //Añadimos eventos a los ellemtos que necesitamos
+    selectUsuarios.addEventListener('blur', function () {
+      cargarUsuario(selectUsuarios)
+    });
+    //Añadimos un evento blur cunado quita el foco del elemto para obtener la informacion del proveedor segun el valor del input
+    selectNexpediente.addEventListener('blur', function () {
+      cargarProveedor(selectNexpediente)
+    });
+
+    //Abrimos el modal   
+    abrirModal("modalGeneral")   
+  }
+</script>
+<!-- Btn para cambiar de tablas-->
+<script>
+  function cerrarAbrirTablas(abrirFacturas) { 
+    var tablamostrar=""
+  if (abrirFacturas == true) {
+    if(albaranes!=""){
+      tablamostrar="tablaControlSolicitudFirma"
+      document.getElementById('contenedorTabla1').classList.add('ocultarImportant')
+      document.getElementById('contenedorTabla2').classList.remove('ocultarImportant')
+    }
+  } else {
+    tablamostrar="tablaContabilizar"
+    document.getElementById('contenedorTabla2').classList.add('ocultarImportant')
+    document.getElementById('contenedorTabla1').classList.remove('ocultarImportant')
+  }
+
+    // Obtén la referencia a la tabla utilizando el ID proporcionado:
+    var miTablaColocar = document.getElementById(tablamostrar);
+    if (miTablaColocar && $.fn.DataTable.isDataTable(miTablaColocar)) {
+      // Accede al DataTable de la tabla y ajusta las columnas:
+      var dataTableColocar = $(miTablaColocar).DataTable();
+      dataTableColocar.columns.adjust().draw("page");
+    }
+
+}
+</script>
+<!-- Funcion que se ejecutan en los eventos blur -->
+<script>
+  function cargarProveedor(selectNexpediente){
+    document.getElementById('divInfoProveedor').innerHTML=''
+    // Obtén el valor seleccionado
+    var selectedValue = selectNexpediente.value;
+    var tipoContrato = datosCombinados[selectedValue];
+    var expedienteEncontrado=tipoContrato
+
+    var g = 'Sin contrato'
+    if(selectedValue == 'Sin contrato'){
+      document.getElementById('selectNexpediente').classList.add('campoNoRellenable')
+      document.getElementById('selectNexpediente').classList.remove('campoRellenable')
+      addTitulo('h5', 'divInfoProveedor', 'Info. Proveedor');
+      addDiv('divInfoProveedor','divInfo','row flexSW col s12 m12 l12')
+      addInput('divInfo','cifProveedor','text','CIF','campoRellenable','col s12 m6 l6 input-field','retornoInput',false)
+      addInput('divInfo','emailProveedor','text','Email','campoRellenable','col s12 m6 l6 input-field','retornoInput',false)
+    }else{
+      document.getElementById('selectNexpediente').classList.remove('campoNoRellenable')
+      document.getElementById('selectNexpediente').classList.add('campoRellenable')
+      //Añdimos titulo y div
+      addTitulo('h5', 'divInfoProveedor', 'Info. Proveedor');
+      addDiv('divInfoProveedor','divInfo','row flexSW col s12 m12 l12')
+      //Añdimos los inputs necesarios
+      addInput('divInfo','razonProveedor','text','Razon','campoNoRellenable','col s12 m6 l4 input-field','retornoInput',true).value=tipoContrato.datos_prov.razon
+      addInput('divInfo','cifProveedor','text','CIF','campoNoRellenable','col s12 m6 l4 input-field','retornoInput',true).value=tipoContrato.datos_prov.cif
+      addInput('divInfo','emailResponsableContrato','text','RC','campoNoRellenable','col s12 m6 l4 input-field','retornoInput',true).value=tipoContrato.responsable
+      addInput('divInfo','asuntoProveedor','text','Asunto','campoNoRellenable','col s12 m6 l6 input-field','retornoInput',true).value=tipoContrato.asunto
+      addInput('divInfo','emailProveedor','text','Email','campoNoRellenable','col s12 m6 l6 input-field','retornoInput',true).value=tipoContrato.datos_prov.email
+      addInput('divInfo','datosNexpedientes','text','Datos','campoNoRellenable','col s12 m6 l6 input-field ocultar','retornoInput',true).value=JSON.stringify(expedienteEncontrado)
+    }
+    M.updateTextFields();
+  }
+
+  function cargarUsuario(selectUsuarios){
+    const correoBuscar = selectUsuarios.value+'@esmasalcorcon.com';
+    let usuarioEncontrado = null;
+    for (const usuario of usuarios) {
+      if (usuario[2] === correoBuscar) {
+        usuarioEncontrado = usuario;
+        break;
+      }
+    }
+    if (usuarioEncontrado) {
+      var usuarioEnvio= new UsuarioApp(usuarioEncontrado, '');
+      document.getElementById('infoUsuarioInput').value=JSON.stringify(usuarioEnvio)
+    } else {
+
+    }
+  }
+</script>

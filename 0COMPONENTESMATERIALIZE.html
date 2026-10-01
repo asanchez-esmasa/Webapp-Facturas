@@ -1,0 +1,15 @@
+<!--------------Inizializar elemtos materialize----------------------------->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var elemsSelect = document.querySelectorAll('select');
+    var instancesSelect = M.FormSelect.init(elemsSelect);
+    var elemsCollapsible = document.querySelectorAll('.collapsible');
+    var instancesCollapsible = M.Collapsible.init(elemsCollapsible);
+    var elemsModal = document.querySelectorAll('.modal');
+    var instancesModal = M.Modal.init(elemsModal);
+    var elemsPiker = document.querySelectorAll('.datepicker');
+    var instancesPiker = M.Datepicker.init(elemsPiker);
+    var elemsTooltipped = document.querySelectorAll('.tooltipped');
+    var instancesTooltipped = M.Tooltip.init(elemsTooltipped);
+  });
+</script>

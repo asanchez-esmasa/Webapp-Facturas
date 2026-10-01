@@ -1,0 +1,530 @@
+<!-------------------------------- Variables gobales ---------------------------------------------------->
+<script>
+  function subirArchivoAlbaran(selector,idInputIdArchivos,dato1,dato2,dato3){
+    const archivosHtm = document.querySelectorAll(selector);
+    numArchivos = archivosHtm.length;
+    if(numArchivos>0){
+      //mostrarDivCargando("Generando Registro")
+      for(i=0;i<archivosHtm.length;i++){
+        const nombre = archivosHtm[i].file.name
+        var elemthtml = document.getElementById(nombre)
+        //Archivo //elementoHtml //  //idInputRecibeID
+        new FileUploadAlbaran(archivosHtm[i].file,elemthtml,idInputIdArchivos,dato1,dato2,dato3)
+      }
+    }else{
+      // mostrarOcultarLoader('cargaAddEmpresa','textoCargaAddEmpresa',"",'ocultarImportant','mostrar')
+      avisoAccion('No hay archivo' ,'claseAccion')
+    }
+  }
+
+  function subirArchivoAlbaranModificado(selector,idInputIdArchivos,arrayDatos){
+    const archivosHtm = document.querySelectorAll(selector);
+    console.log("archivosHtm _ "+archivosHtm)
+    numArchivos = archivosHtm.length;
+    if(numArchivos>0){
+      //mostrarDivCargando("Generando Registro")
+      for(i=0;i<archivosHtm.length;i++){
+        console.log("archivosHtm[arrayDatos[i]] _ "+archivosHtm[i])
+        console.log("archivosHtm[arrayDatos[i]].file _ "+archivosHtm[i].file)
+        console.log("archivosHtm[arrayDatos[i]].file.name _ "+archivosHtm[i].file.name)
+        const nombre = archivosHtm[i].file.name
+        var elemthtml = document.getElementById(nombre)
+        //Archivo //elementoHtml //  //idInputRecibeID
+        new FileUploadAlbaran(archivosHtm[i].file,elemthtml,idInputIdArchivos,"","","")
+      }
+    }else{
+      // mostrarOcultarLoader('cargaAddEmpresa','textoCargaAddEmpresa',"",'ocultarImportant','mostrar')
+      avisoAccion('No hay archivo' ,'claseAccion')
+    }
+  }
+
+  function FileUploadAlbaran(file,html,idInputIdArchivos,dato1,dato2,dato3) { 
+    var carpetaDestino= document.getElementById('idCarpeta').value
+    if (carpetaDestino.trim() === '') {
+      // Asignar un valor por defecto si está vacía
+      carpetaDestino = '1onkeSA8ARiXiYFouYdOyW8JqDnol_o9X';
+    }
+    var reader = new FileReader();
+    reader.onload = function(event) {
+      const obj = {
+        filename: file.name,
+        mineType: false.type,
+        bytes: [...new Int8Array(event.target.result)]
+      }
+      var imgCarpeta = [obj,carpetaDestino]
+      google.script.run
+      .withSuccessHandler(function(idArchivo) {
+        enviarIdAlbaran(idArchivo,idInputIdArchivos,dato1,dato2,dato3); // Pasa los parámetros adicionales a la función
+      })
+      .subirArchivosUrl(imgCarpeta)
+    }
+    reader.readAsArrayBuffer(file)
+  }
+
+
+  function enviarIdAlbaran(idArchivo,idInputIdArchivos,dato1,dato2,dato3){
+    var formulario= document.getElementById('formularioLicitacion')
+    idsArchivos=[]
+    idsArchivos.push(idArchivo)
+    document.getElementById(idInputIdArchivos).value = idsArchivos;
+    archivosFacturasEnEspera--;
+    comprobarFotosAlbaranes(dato1,dato2,dato3)
+  }
+
+
+
+
+function comprobarFotosAlbaranes(dato1, dato2, dato3) {
+  console.group("🧾 comprobarFotosAlbaranes");
+  //console.log("Args:", dato1, dato2, dato3);
+
+  console.log("archivosFacturasEnEspera =", archivosFacturasEnEspera);
+
+  if (archivosFacturasEnEspera !== 0) {
+    console.warn("⏳ Hay archivos en espera, no se procesa nada");
+    console.groupEnd();
+    return;
+  }
+
+  console.log("✅ No hay archivos en espera, continuamos");
+
+  mostrarOcultarLoaderGeneral(
+    'cargaEnvioGeneral',
+    'textoCargaGeneral',
+    "Añadiendo albaranes",
+    'ocultarImportant',
+    'carga'
+  );
+
+  var containerElement = document.getElementById('contenedorSecundario');
+  if (!containerElement) {
+    console.error("❌ No existe contenedorSecundario");
+    console.groupEnd();
+    return;
+  }
+
+  var chil = containerElement.children;
+  var numerosIdElementos = [];
+
+  console.group("🔢 Extracción de IDs");
+  for (var i = 0; i < chil.length; i++) {
+    var id = chil[i].id;
+    var match = id.match(/\d+$/);
+
+    if (!match) {
+      console.warn("⚠️ ID sin número:", id);
+      continue;
+    }
+
+    numerosIdElementos.push(parseInt(match[0]));
+    console.log("✔", id, "→", match[0]);
+  }
+  console.groupEnd();
+
+  var datalist = document.getElementById('datalistAlbaranesSinFactura');
+  var options = datalist ? datalist.querySelectorAll('option') : [];
+
+  console.log("📄 options datalist:", options.length);
+
+  var arrayFacturas = [];
+
+  console.group("🧪 Evaluación de albaranes");
+  numerosIdElementos.forEach(function(id) {
+    console.group("🔹 ID:", id);
+
+    var contendorImg = document.getElementById('listaImg' + id);
+    var nAlbaranInput = document.getElementById('nAlbaran' + id);
+    var fechaInput = document.getElementById('fechaAlbaran' + id);
+    var archivoInput = document.getElementById('idArchivoAlbaran' + id);
+
+    var nAlbaranValue = nAlbaranInput ? nAlbaranInput.value : "";
+    var fechaAlbaranValue = fechaInput ? fechaInput.value : "";
+    var urlArchivoAlbaran = archivoInput ? archivoInput.value : "";
+
+    console.log("nAlbaran:", nAlbaranValue);
+    console.log("fecha:", fechaAlbaranValue);
+    console.log("img:", !!contendorImg);
+    console.log("archivo:", urlArchivoAlbaran);
+
+    var duplicado = false;
+    options.forEach(function(option) {
+      if (option.value === nAlbaranValue && nAlbaranValue !== "") {
+        duplicado = true;
+      }
+    });
+
+    console.log("duplicado:", duplicado);
+
+    if ((contendorImg && fechaAlbaranValue !== "") || duplicado) {
+      console.log("✅ Se añade al arrayFacturas");
+
+      arrayFacturas.push({
+        [nAlbaranValue]: {
+          fechaAlbaran: fechaAlbaranValue,
+          urlArchivoAlbaran: urlArchivoAlbaran
+        }
+      });
+    } else {
+      console.log("⛔ No cumple condiciones");
+    }
+
+    console.groupEnd();
+  });
+  console.groupEnd();
+
+  console.log("📦 arrayFacturas generado:", arrayFacturas);
+
+  var inputObjetoFacturas = document.getElementById('objetoConjuntoFacturas');
+  if (!inputObjetoFacturas) {
+    console.error("❌ No existe objetoConjuntoFacturas");
+    console.groupEnd();
+    return;
+  }
+
+  if (inputObjetoFacturas.value !== '') {
+    console.log("🔁 Concatenando facturas anteriores");
+    var anteriores = JSON.parse(inputObjetoFacturas.value);
+    inputObjetoFacturas.value = JSON.stringify([...arrayFacturas, ...anteriores]);
+  } else {
+    console.log("🆕 Guardando solo facturas nuevas");
+    inputObjetoFacturas.value = JSON.stringify(arrayFacturas);
+  }
+
+  console.log("📨 Valor final inputObjetoConjuntoFacturas:", inputObjetoFacturas.value);
+
+  var formulario = document.getElementById('formularioFirmarFactura');
+  if (!formulario) {
+    console.error("❌ No existe formularioFirmarFactura");
+    console.groupEnd();
+    return;
+  }
+
+  console.log("🚀 Llamada a guardarAlbaranes");
+
+  google.script.run
+    .withSuccessHandler(function(data) {
+      console.group("✅ Success guardarAlbaranes");
+      console.log("Respuesta servidor:", data);
+
+      contadorInputsAlbaranes = 0;
+      contadorInputsFactura = 0;
+
+      addComponenteImgBlur();
+
+      obtenerDatos(datosAlbaranes)
+        .then(function(albaranesRes) {
+          console.log("📥 Datos albaranes refrescados");
+          albaranes = albaranesRes;
+
+          mostrarOcultarLoaderGeneral(
+            'cargaEnvioGeneral',
+            'textoCargaGeneral',
+            "Añadiendo archivos.",
+            'carga',
+            'ocultarImportant'
+          );
+
+          cerrarModal("modalGeneral");
+          abrirModalAdjuntarFactura(datos_exp_abrirModalAdjuntarFactura);
+        })
+        .catch(function(err) {
+          console.error("❌ Error obtenerDatos:", err);
+        });
+
+      console.groupEnd();
+    })
+    .guardarAlbaranes(formulario);
+
+  console.groupEnd();
+}
+
+
+</script>
+
+
+
+
+
+
+<!----------------------------------Crear elemto html  ---------------------------------->
+<script>
+  function crearInputImg(idContenedorPrincipal,ocultarContenedor,idContenedor,idTitulo,textoTitulo,inputIdName,idContenedorPreview,idContenedorDropZone,idInfoImg,obj,idListaImg,clase,idInputIdArchivos,idLugarColocar,tipoAceptado){
+    
+    //Contenedor principal donde vamos a cargar los elementos
+    var contendorHtml=document.getElementById(idContenedorPrincipal)
+    if(ocultarContenedor==true){
+    contendorHtml.setAttribute('class', 'ocultar');
+    }
+    var contendorInput=document.getElementById(idLugarColocar)
+    //Creamos div padre
+    var divElement = document.createElement('div');
+    divElement.classList.add('flexRowSpaceEvenlyWrap', 'col', 's6', 'row');
+
+    //Creamos el elemento hijo div
+    var childDivElement = document.createElement('div');
+    childDivElement.classList.add('flexRowSpaceEvenlyWrap', 'col', 's12', 'm12', 'l12', 'row');
+    childDivElement.setAttribute('id', idContenedor);
+
+    // Creamos el titulo del campo 
+    var h5Element = document.createElement('h5');
+    h5Element.classList.add('center');
+    h5Element.setAttribute('id', idTitulo);
+    h5Element.textContent = textoTitulo;
+
+    // Crear el elemento div dentro de archivoEmpresa
+    var archivoEmpresaDiv = document.createElement('div');
+    archivoEmpresaDiv.classList.add('campo', 'col', 's12', 'm12', 'l12', 'row','archivoEmpresa');
+
+    var inputIdArchivo = document.createElement('input');
+    inputIdArchivo.setAttribute('type', 'text');
+    inputIdArchivo.setAttribute('id', idInputIdArchivos);
+    inputIdArchivo.setAttribute('name', idInputIdArchivos);
+    inputIdArchivo.setAttribute('class', 'ocultar');
+
+    // Crear el elemento de entrada de archivo
+    var inputFileElement = document.createElement('input');
+    inputFileElement.setAttribute('type', 'file');
+    inputFileElement.setAttribute('id', inputIdName);
+    inputFileElement.setAttribute('name', inputIdName);
+    inputFileElement.setAttribute('capture', 'camera');
+    inputFileElement.setAttribute('multiple', '');
+    inputFileElement.setAttribute('accept', tipoAceptado);
+
+    // Crear el elemento de vista previa
+    var previewDiv = document.createElement('div');
+    previewDiv.classList.add('preview');
+    previewDiv.setAttribute('id', idContenedorPreview);
+    previewDiv.setAttribute('for', inputIdName);
+
+    // Crear el elemento de drop zone
+    var dropZoneDiv = document.createElement('div');
+    dropZoneDiv.classList.add('cssContenedorImg');
+    dropZoneDiv.setAttribute('id', idContenedorDropZone);
+
+    // Crear el elemento de etiqueta de información de imagen
+    var infoLabel = document.createElement('label');
+    infoLabel.setAttribute('id', idInfoImg);
+
+    var pElement = document.createElement('p');
+    pElement.classList.add('box_start');
+    pElement.textContent = 'No hay archivos seleccionados ...';
+
+    // Añadir elementos secundarios al elemento principal
+    infoLabel.appendChild(pElement);
+    dropZoneDiv.appendChild(infoLabel);
+    previewDiv.appendChild(dropZoneDiv);
+    archivoEmpresaDiv.appendChild(inputFileElement);
+    archivoEmpresaDiv.appendChild(previewDiv);
+    childDivElement.appendChild(h5Element);
+    childDivElement.appendChild(archivoEmpresaDiv);
+    divElement.appendChild(childDivElement);
+    contendorInput.appendChild(inputIdArchivo);
+
+    // Añadir el elemento principal al cuerpo del documento
+    contendorHtml.appendChild(divElement);
+
+    inputFileElement.addEventListener("change", () => actualizarDivImagen(previewDiv, inputFileElement, obj, idContenedorDropZone, idListaImg, "elimnarElemento", clase, idContenedorPreview, inputIdName,idInputIdArchivos,idsArchivos,idInputIdArchivos), { passive: true });
+
+  }
+</script>
+<!-------------Funcion carga una previsulizacion de la imagen y selecionar varias img-------------------->
+<script>
+  function actualizarDivImagen(contenedorImgs,inputImg,obj,dropZone,lista,nombreFuncion,clase,box,archivos,inputId) {
+    //Guardamos en una variable llamada archivosSelecionadolos los archivos seleccionados¡
+    const archivosSelecionados = inputImg.files;
+    const archivoshtmlImg = document.querySelectorAll("."+obj);
+    if(contenedorImgs.firstChild){
+      document.getElementById(dropZone).style.display = "none";
+    }
+    //Limitamos la subida de de archivos 
+    if(archivoshtmlImg.length <=4){
+      //Verifique si no se seleccionó ningún archivo, verificando si archivosSelecionados.lengthes igual a 0. 
+      if(archivosSelecionados.length === 0) {
+
+      } else {
+        if(archivoshtmlImg.length === 0){
+          const listaImgs = document.createElement('div');
+          contenedorImgs.appendChild(listaImgs);
+          listaImgs.setAttribute("class","listaFlex")
+          listaImgs.setAttribute("id",lista)
+          crearImgYBtn(listaImgs,archivosSelecionados,nombreFuncion,obj,clase,lista,box,dropZone,archivos,inputId)
+        }else{
+          const referenciaListaImgs =document.getElementById(lista)
+          crearImgYBtn(referenciaListaImgs,archivosSelecionados,nombreFuncion,obj,clase,lista,box,dropZone,archivos,inputId)
+        }
+      }
+    }else{
+    }
+  }
+</script>
+<!---------------------------Crear imagen y boton elemento html--------------------------------------------->
+<script>
+  function crearImgYBtn(listaImgs,archivosSelecionados,nombreFuncion,obj,clase,lista,box,dropZone,archivos,inputId){
+    for (const archivo of archivosSelecionados) {
+      const divImg = document.createElement('div');
+      const btnEliminarElemento = document.createElement('button');
+      const iconoBtn = document.createElement('i');
+      const infoImg = document.createElement('p');
+
+      iconoBtn.setAttribute("class","material-icons material-iconss")
+
+      iconoBtn.innerHTML='close'
+      divImg.setAttribute("class",clase)
+      
+      divImg.setAttribute("type","button")
+
+      divImg.setAttribute("id",archivo.name)
+
+      btnEliminarElemento.setAttribute("onClick", nombreFuncion+"('"+archivo.name+"', '"+lista+"', '"+box+"', '"+archivos+"', '"+obj+"', '"
+      +dropZone+"', '"+inputId+"')");
+      btnEliminarElemento.setAttribute("type","button")
+      btnEliminarElemento.setAttribute("class","boton-eliminar")
+      //si el archivo es valido continua
+      if (validarTipoArchivo(archivo)) {
+        const imagen = document.createElement('img');
+        imagen.setAttribute("class",obj)
+        imagen.file=archivo
+        imagen.src = URL.createObjectURL(archivo);
+        divImg.appendChild(imagen);
+        btnEliminarElemento.appendChild(iconoBtn)
+        divImg.appendChild(btnEliminarElemento)
+        if(imagen.file.type=="application/pdf"){
+          //Si el tipo de archivo no es válido, mostramos un mensaje dentro de un elemento de la lista 
+          const reader = new FileReader();
+          reader.onload = (function(aImg){return function(e){aImg.src="https://drive.google.com/thumbnail?id=1KjhN_5JSvdxhXDmu0wezoyVRV6315WSE";}
+          ;})(imagen);
+          reader.readAsDataURL(imagen.file)
+        }else{
+          const reader = new FileReader();
+          reader.onload = (function(aImg){return function(e){aImg.src=e.target.result;};})(imagen);
+        }
+      } else {
+        infoImg.textContent = `File name ${archivo.name}: Not a valid file type. Update your selection.`;
+        divImg.appendChild(infoImg);
+      }
+      listaImgs.appendChild(divImg);
+    }  
+  }
+</script>
+<!------------------------------Validar tipo de archivo-------------------------------------------------->
+<script>
+  function validarTipoArchivo(file) {
+    return tiposDeArchivos.includes(file.type);
+}  
+</script>
+<!------------------------------Subir archivo------------------------------------------------->
+<script>
+  function subirArchivo(selector,contenedor,idInputIdArchivos,tipoFuncion,form,tipoRetorno,idCarpeta){
+    const archivosHtm = document.querySelectorAll(selector);
+    var numArchivos1 = archivosHtm.length;
+    if(numArchivos1>0){
+      //mostrarDivCargando("Generando Registro")
+      for(i=0;i<archivosHtm.length;i++){
+        const nombre = archivosHtm[i].file.name
+        var elemthtml = document.getElementById(nombre)
+        new FileUploadGeneral(archivosHtm[i].file,elemthtml,contenedor,idInputIdArchivos,tipoFuncion,form,tipoRetorno,idCarpeta)
+      }
+    }else{
+      // mostrarOcultarLoader('cargaAddEmpresa','textoCargaAddEmpresa',"",'ocultarImportant','mostrar')
+      avisoAccion('Generando empresa' ,'claseAccion')
+    }
+  }
+
+  function FileUploadGeneral(file,html,contenedor,idInputIdArchivos,tipoFuncion,form,tipoRetorno,idCarpeta) {
+   var carpetaDestino= document.getElementById('idCarpeta').value
+   if (carpetaDestino.trim() === '') {
+    // Asignar un valor por defecto si está vacía
+    carpetaDestino = idCarpeta ? idCarpeta : '1boj00o0a5CUdZM_v56Wv6C6n6uCISG7k';
+    }
+    var reader = new FileReader();
+    reader.onload = function(event) {
+      const obj = {
+        filename: file.name,
+        mineType: false.type,
+        bytes: [...new Int8Array(event.target.result)]
+      }
+      var imgCarpeta = [obj,carpetaDestino,tipoRetorno]
+      google.script.run
+      .withSuccessHandler(function(data) {
+        enviarIdGeneral(data, contenedor,idInputIdArchivos,tipoFuncion,form); // Pasa los parámetros adicionales a la función
+      })
+      .subirArchivos(imgCarpeta)
+    }
+    reader.readAsArrayBuffer(file)
+  }
+</script>
+<!-------------------------------- Enviar id -------------------------------------------------------------->
+<script>
+  function enviarIdGeneral(e,contenedor,idInputIdArchivos,tipoFuncion,form){
+    //var formulario= document.getElementById('formularioLicitacion')
+    idsArchivos.push(e)
+    document.getElementById(idInputIdArchivos).value=idsArchivos;
+    numArchivos--;
+    comprobarFotosEnviarFormulario(form,tipoFuncion)
+  }
+</script>
+<!-----------------------------Comprobar si quedan archivos SELECT BIGQUERY---------------------------------------------->
+<script>
+  function comprobarFotosEnviarFormulario(formulario,tipoFuncion){
+    if(numArchivos==0){
+    switch (tipoFuncion) {
+      case 'tipoSubirFactura':
+        habilitarCamposDeEntrada('formularioGeneral')
+        google.script.run
+        .withSuccessHandler(function (value) {
+          const mensaje =
+          "Se ha enviado un correo a "+value.usuarioReceptor+" con la siguiente información:\n\n" +
+          "Número de Expediente: " + value.nExpediente + "\n" +
+          "ID de Factura: " + value.idFactura + "\n" +
+          "Importe sin IVA: " + value.importeSinIva + "\n" +
+          "Observaciones: " + value.observaciones + "\n" +
+          "Fecha de Emisión de la Factura: " + value.fechaEmisionFactura + "\n" +
+          "Estado: " + value.estado + "\n";
+          mostrarOcultarLoaderGeneral('cargaEnvioGeneral','textoCargaGeneral',"Generando pedido.",'carga','ocultarImportant')
+          cerrarModal("modalGeneral")
+          generarAviso('¡Solicitud enviada!','success',false,false,mensaje)
+          google.script.run
+          .withSuccessHandler(function (value) {
+            actualizarTablasFacturas(value)
+          }).obtenerDatosTablaBQ(datosFirma1, true); 
+        })
+        .guardarDatosSolicitudFirmaFactura2(formulario);   
+        break;
+      case 'firmarFactura':
+        google.script.run
+        .withSuccessHandler(function (value) {
+        mostrarOcultarLoaderGeneral('cargaEnvioGeneral','textoCargaGeneral',"",'carga','ocultarImportant')
+        cerrarModal("modalGeneral")
+            generarAviso('¡Factura firmada!','success',false,false,'Se ha enviado un correo al solicitante con toda la informacion facilitada: '+value+'.\n')
+        }).firmaFactura(formulario);   
+        break;
+      case 'adjuntarAlbaranes':
+        google.script.run
+        .withSuccessHandler(function (value) {
+          generarAviso('¡Albaranes subidos!','success',false,false,'Se ha añadido: '+value+'.\n')
+        }).adjuntarAlbaranesFacturas(formulario);   
+        break;
+        default:
+        break;
+      }
+    }else{
+      mostrarOcultarLoader('cargaEnvioLicitacion','textoCargaLicitacion',"Faltan por subir "+ numArchivos +" archivos",'ocultarImportant','ocultar')
+    }
+  }
+</script>
+<!------------------------------Eliminar elemento imagen------------------------------------------------->
+<script>
+  function elimnarElemento(a,lista,box,archivos,obj,dropZone,inputId){
+    var g = document.getElementById(lista);
+    var h = document.getElementById(box);
+    g.removeChild(document.getElementById(a))
+    document.getElementById(inputId).value = "";
+    document.getElementById(archivos).value = "";
+    var archivosSelecionadoss = document.querySelectorAll("."+obj);
+    if(archivosSelecionadoss.length ===0){
+      document.getElementById(dropZone).style.display = "flex";
+      h.removeChild(document.getElementById(lista))
+    }else{
+    }
+  } 
+</script>

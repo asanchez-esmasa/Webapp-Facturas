@@ -1,0 +1,693 @@
+<!--Solicitar firma-->
+<script>
+function solicitarFirmaFactura(formulario) {
+  console.log("entra a solicitarfirmafacturas")
+
+
+
+
+  console.log("--- INICIO DE INSPECCIÓN ---");
+  console.log("Elemento formulario recibido:", formulario);
+
+  // 1. Intentamos ver qué datos hay dentro del objeto que se enviará a Google
+  /*try {
+    const formData = new FormData(formulario);
+    console.log("Campos detectados en el formulario:");
+    for (let [key, value] of formData.entries()) {
+      if (value instanceof File) {
+        console.log(`- Archivo detectado en [${key}]: Nombre: ${value.name}, Tamaño: ${value.size} bytes, Tipo: ${value.type}`);
+      } else {
+        console.log(`- Campo [${key}]: ${value}`);
+      }
+    }
+  } catch (e) {
+    console.error("No se pudo inspeccionar el FormData:", e);
+  }*/
+
+
+
+
+  var selectDisabledEstado=document.getElementById('selectUsuario').disabled;
+  document.getElementById('selectUsuario').disabled = false;
+  var valoresFormulario = obtenerValoresFormulario('formularioGeneral');
+  var valorSelectExpediente = valoresFormulario.selectNexpediente;
+  var infoRellena;
+
+  if (valorSelectExpediente == 'Sin contrato') {
+    var tipoDocumento=tipoDocumentoEspanol(document.getElementById('cifProveedor').value);
+    if(tipoDocumento == "DNI" || tipoDocumento == "NIE" || tipoDocumento == "CIF"){
+      document.getElementById('selectNexpediente').classList.add('campoNoRellenable');
+      document.getElementById('selectNexpediente').classList.remove('campoRellenable');
+      infoRellena = validarFormulario('#formularioGeneral textarea.campoRellenable, #formularioGeneral input.campoRellenable', '#formularioGeneral textarea.campoRellenable.valido, #formularioGeneral input.campoRellenable.valido', 5);
+    }else{
+      Swal.fire({
+        icon: "error",
+        title: tipoDocumento
+      });
+    }
+  } else {
+    infoRellena = validarFormulario('#formularioGeneral textarea.campoRellenable, #formularioGeneral input.campoRellenable', '#formularioGeneral textarea.campoRellenable.valido, #formularioGeneral input.campoRellenable.valido', 4);
+  }
+  if (infoRellena) {
+    var noExisteNumFactura=true;
+    var facturaAValidar="";
+    //QUITA ESPACIOS DELANTE Y DETRAS DEL Nº FACTURA
+    var inputElementNumFactura= document.getElementById("nFactura");
+    if (inputElementNumFactura) {
+        inputElementNumFactura.value = inputElementNumFactura.value.trim();
+        facturaAValidar = inputElementNumFactura.value;
+    } 
+
+    // Recorremos el array arrayFacturasGlobal
+    for (let z = 0; z < arrayFacturasGlobal.length; z++) {
+        if (facturaAValidar === arrayFacturasGlobal[z][1]) {
+            if (document.getElementById('cifProveedor').value === arrayFacturasGlobal[z][28]) {
+                noExisteNumFactura = false;
+                break; // Salimos del bucle si encontramos coincidencia
+            }
+        }
+    }
+    if (noExisteNumFactura) {
+      var archivos = document.querySelectorAll('.obj0');
+      var fd = new FormData(formulario);
+      var archivoOriginal = fd.get('archivos0'); // Buscamos por el 'name' del input
+      var numArchivos = archivos.length;
+
+
+
+
+
+
+      // PRUEBA PARA ELIMINAR EL ARCHIVO PDF, VOLVER A PONER A 1 DESPUES
+      if (numArchivos === 1) {
+        nProcesos += 1;
+        comprobarNprocesos('textoNotificacion','NºSolicitudes de firmas en ejecución: ' + nProcesos)
+        habilitarCamposDeEntrada('formularioGeneral');
+
+
+        // --- TRUCO PARA EVITAR ERROR 500 ---
+        // Buscamos el input de tipo file dentro del formulario o por su clase
+        var inputFile = document.querySelector('input[type="file"].obj0') || document.querySelector('input[type="file"]');
+        
+        if (!inputFile || !inputFile.files[0]) {
+           Swal.fire("Error", "No se encuentra el archivo adjunto", "error");
+           return;
+        }
+
+        var archivoOriginal = inputFile.files[0];
+        var lector = new FileReader();
+        lector.onload = function(e) {
+          // --- CONSTRUCCIÓN DINÁMICA DEL OBJETO ---
+          var datosLimpios = {};
+          
+          // Recorremos el FormData que ya sabemos que funciona
+          for (let [key, value] of fd.entries()) {
+            if (!(value instanceof File)) {
+              datosLimpios[key] = value;
+              console.log("datosLimpios: " + key + ": " + value)
+            }
+          }
+
+          // B. FORZADO MANUAL DE CAMPOS (Incluso si siguen disabled o son invisibles)
+          var IDsAForzar = [
+            'razonProveedor', 
+            'cifProveedor', 
+            'emailResponsableContrato', 
+            'asuntoProveedor', 
+            'emailProveedor',
+            'datosNexpedientes'
+          ];
+
+          IDsAForzar.forEach(function(id) {
+            // Buscamos específicamente dentro del formulario recibido
+            var el = formulario.querySelector('#' + id) || document.getElementById(id);
+            
+            if (el) {
+              datosLimpios[id] = el.value;
+              console.log("✅ Encontrado: " + id + " -> " + el.value);
+            } else {
+              // Si sigue sin aparecer, intentamos buscar por el atributo 'name'
+              var elByName = formulario.querySelector('[name="' + id + '"]');
+              if (elByName) {
+                datosLimpios[id] = elByName.value;
+                console.log("✅ Encontrado por NAME: " + id);
+              } else {
+                console.warn("❌ CRÍTICO: El campo " + id + " no existe en el formulario ni en el DOM");
+              }
+            }
+          });
+          // Añadimos el archivo convertido
+          datosLimpios['archivoBase64'] = e.target.result.split(',')[1];
+          datosLimpios['archivoNombre'] = archivoOriginal.name;
+          
+          // Aseguramos campos que a veces no detecta FormData (como checkboxes no marcados)
+          datosLimpios['checkInversion'] = document.getElementById('checkInversion')?.checked ? "on" : "off";
+          datosLimpios['checkFirma'] = document.getElementById('checkFirma')?.checked ? "on" : "off";
+
+          console.log("Enviando objeto construido dinámicamente:", datosLimpios);
+
+
+
+          console.log("intento llamada google");
+          google.script.run
+            .withSuccessHandler(function (value) {
+              nProcesos -= 1;
+              comprobarNprocesos('textoNotificacion','NºSolicitudes de firmas en ejecución: ' + nProcesos)
+              const mensaje =
+                "Se ha enviado un correo a " + value.usuarioReceptor + " con la siguiente información:\n\n" +
+                "Número de Expediente: " + value.nExpediente + "\n" +
+                "ID de Factura: " + value.idFactura + "\n" +
+                "Importe sin IVA: " + value.importeSinIva + "\n" +
+                "Observaciones: " + value.observaciones + "\n" +
+                "Fecha de Emisión de la Factura: " + value.fechaEmisionFactura + "\n" +
+                "Estado: " + value.estado + "\n";
+              generarAviso('¡Solicitud enviada!', 'success', false, false, mensaje);
+              google.script.run
+              .withSuccessHandler(function (value) {
+                actualizarTablasFacturas(value);
+              }).obtenerDatosTablaBQ(datosFirma1,true);
+                obtenerDatos(datosAlbaranes).then(function(albaranesRes) {
+                  albaranes=albaranesRes
+                }).catch(function(error) {
+                  console.error("error en albaranes: ", error)
+                });
+            })
+            .withFailureHandler(function (error){
+              nProcesos -= 1;
+              comprobarNprocesos('textoNotificacion','Error en ejecucón: ' + nProcesos);
+
+
+              // ESTO ES LO QUE NECESITAMOS VER
+              console.error("Objeto error completo:", error);
+              console.error("Mensaje:", error.message);
+
+
+              Swal.fire({
+                icon: "error",
+                title: "Error en el servidor",
+                text: "Mensaje de Google: " + error.message
+              });
+            })
+            .guardarDatosSolicitudFirmaFactura2(datosLimpios);
+        }
+          //.test1eqwsdfwefewf(formulario);
+        lector.readAsDataURL(archivoOriginal);
+        abrirModalSolicitudFirma();
+      } else {
+        document.getElementById('selectUsuario').disabled=selectDisabledEstado;
+        generarAviso('¡Añadir factura!', 'error', false, false, 'Para solicitar una firma necesita adjuntar la factura en formato PDF');
+      }
+    }else{
+        Swal.fire({
+        icon: "error",
+        title: "Ya existe una factura con este número y CIF. Por favor, revise la información."
+      });
+    }
+  } else {
+    if(tipoDocumento == "DNI" || tipoDocumento == "NIE" || tipoDocumento == "CIF"){
+      document.getElementById('selectUsuario').disabled=selectDisabledEstado;
+      generarAviso('¡Revisa los campos!', 'error', false, false, 'Para solicitar una firma necesita introducir NºFactura, NºExpediente, el usuario al que le solicitamos la firma e importe');
+    }
+    document.getElementById('selectUsuario').disabled=selectDisabledEstado;
+  }
+}
+</script>
+<!-- VALIDADOR DOCUMENTO NACIONAL ESPAÑOL -->
+<script>
+function tipoDocumentoEspanol(numero) {
+    // Verificar si 'numero' es una cadena de texto no vacía
+    if (typeof numero !== 'string' || numero.trim() === '') {
+        // Si no es una cadena de texto o está vacía, devolver el mensaje de error.
+        return "No es un CIF, DNI ni NIE válido";
+    }
+
+    // Eliminar posibles espacios en blanco al principio y al final
+    numero = numero.trim();
+
+    // Patrones regulares para CIF, DNI y NIE
+    var patronNif = /^(\d{8})([A-Z])$/;
+    var patronCif = /^([ABCDEFGHJKLMNPQRSUVW])(\d{7})([0-9A-J])$/;
+    var patronNie = /^[XYZ]\d{7}[TRWAGMYFPDXBNJZSQVHLCKE]$/i;
+
+    // Comprobar si el número coincide con alguno de los patrones
+    if (patronNie.test(numero)) {
+        var nieLetra = numero.charAt(8).toUpperCase();
+
+        // Asignar valores a las letras iniciales
+        var valorX = 0;
+        var valorY = 1;
+        var valorZ = 2;
+
+        // Obtener la primera letra y asignar el valor correspondiente
+        var primeraLetra = numero.charAt(0).toUpperCase();
+        var valorPrimeraLetra = (primeraLetra === 'X') ? valorX : (primeraLetra === 'Y') ? valorY : (primeraLetra === 'Z') ? valorZ : 0;
+
+        // Obtener los dígitos restantes
+        var nieNumero = valorPrimeraLetra + numero.substr(1, 7);
+
+        // Calcular la letra de control para el NIE
+        var letrasNIE = 'TRWAGMYFPDXBNJZSQVHLCKE';
+        var restoNIE = nieNumero % 23;
+        var letraControlCalculadaNIE = letrasNIE.charAt(restoNIE);
+
+        // Verificar si la letra de control coincide
+        if (letraControlCalculadaNIE === nieLetra) {
+            return "NIE";
+        } else {
+            return "NIE inválido";
+        }
+    } else if (patronNif.test(numero)) {
+        var dniNumero = numero.substring(0, 8);
+        var dniLetra = numero.charAt(8).toUpperCase();
+
+        // Calcular la letra de control para el DNI
+        var letrasDNI = 'TRWAGMYFPDXBNJZSQVHLCKE';
+        var restoDNI = dniNumero % 23;
+        var letraControlCalculadaDNI = letrasDNI.charAt(restoDNI);
+
+        // Verificar si la letra de control coincide
+        if (letraControlCalculadaDNI === dniLetra) {
+            return "DNI";
+        } else {
+            return "DNI inválido";
+        }
+    } else if (patronCif.test(numero)) {
+        return validarCIF(numero);
+    } else {
+        return "No es un CIF, DNI ni NIE válido";
+    }
+}
+
+/** Funcion que revisa la validación del CIF, si da error, hacer una implementación de prueba, y cambiar
+ * return "CIF Inválido";
+ * 
+ * */
+function validarCIF(cif) {
+    var letra = cif.charAt(0).toUpperCase();
+    var numero = cif.substr(1, 7);
+    var digitoControl = cif.charAt(8).toUpperCase();
+
+    var sumaPares = 0;
+    var sumaImpares = 0;
+
+    for (var i = 0; i < numero.length; i++) {
+        if (i % 2 === 0) { // posiciones impares (0, 2, 4, 6)
+            var doble = (parseInt(numero.charAt(i)) * 2).toString();
+            var suma = 0;
+            for (var j = 0; j < doble.length; j++) {
+                suma += parseInt(doble.charAt(j));
+            }
+            sumaImpares += suma;
+        } else { // posiciones pares (1, 3, 5)
+            sumaPares += parseInt(numero.charAt(i));
+        }
+    }
+
+    var total = sumaPares + sumaImpares;
+    var resto = total % 10;
+    var digitoCalculado = (resto === 0) ? 0 : (10 - resto);
+
+    var letrasControl = 'JABCDEFGHI';
+    var letraCalculada = letrasControl.charAt(digitoCalculado);
+
+    if (/[ABCDEFGHJNPQRSUVW]/.test(letra)) { // Letras que llevan dígito de control numérico
+        if (digitoControl == digitoCalculado) {
+            return "CIF";
+        } else {
+          //Cambiar a CIF Inválido
+            return "CIF Inválido";
+        }
+    } else if (/[KLM]/.test(letra)) { // Letras que llevan dígito de control letra
+        if (digitoControl == letraCalculada) {
+            return "CIF";
+        } else {
+          //Cambiar a CIF Inválido
+            return "CIF Inválido";
+        }
+    } else {
+          //Cambiar a CIF Inválido
+        return "CIF Inválido";
+    }
+}
+</script>
+<!-- Rechazar facturas -->
+<script>
+  function rechazarFactura(formulario,datos,datosCombinado){
+    var datosNexpediente=JSON.parse(datos[16])
+    var existingModal = document.getElementById('modalConfirmacionRechazarFactura');
+    if (!existingModal) {
+      addModal('modalConfirmacionRechazarFactura','modalEncabezadoConfirmacionRechazarFactura','modalEncabezadoTituloConfirmacionRechazarFactura','','','modalContenidoConfirmacionRechazarFactura','modalContenedorBtnConfirmacionRechazarFactura')
+      document.getElementById('modalContenidoConfirmacionRechazarFactura').classList.add('max')
+    }
+    document.getElementById('modalEncabezadoConfirmacionRechazarFactura').innerHTML=''
+    document.getElementById('modalContenidoConfirmacionRechazarFactura').innerHTML=''
+    document.getElementById('modalContenedorBtnConfirmacionRechazarFactura').innerHTML=''
+    generarElementoDinamico('modalEncabezadoConfirmacionRechazarFactura','labelNFactura','Nº factura',datos[1])
+    generarElementoDinamico('modalEncabezadoConfirmacionRechazarFactura','labelNExpediente','NºExpediente',datos[3])
+    generarElementoDinamico('modalEncabezadoConfirmacionRechazarFactura','labelAsunto','Asunto',datosNexpediente.asunto)
+    generarElementoDinamico('modalEncabezadoConfirmacionRechazarFactura','labelFirmarRechazar','Firmar/rechazar','Pendiente')
+    generarIconoMaterial('modalEncabezadoConfirmacionRechazarFactura')
+    addTitulo('h5','modalContenidoConfirmacionRechazarFactura','Al hacer clic en "Rechazar Factura" , se enviará automáticamente un correo al proveedor notificando el rechazo.Proporciona detalles sobre el motivo del rechazo para una mejor comprensión.','center')
+    addForm('modalContenidoConfirmacionRechazarFactura','formularioRechazarFactura','formularioModal')
+    addInput('formularioRechazarFactura','infoProveedor','text','Info. Prove.','campoNoRellenable','col s12 m6 l6 input-field ocultar')
+    addInput('formularioRechazarFactura','motivoRechazo','text','Motivo rechazo','campoRellenable','col s12 m6 l6 input-field')
+    addInput('formularioRechazarFactura','urlFacturSinFirmar','text','Info. URL.','campoNoRellenable','col s12 m6 l6 input-field ocultar')
+    addInput('formularioRechazarFactura','idFacturaRechazar','text','Id factura','campoNoRellenable','ocultar','retornoInput').value=datos[2]
+    addBoton('modalContenedorBtnConfirmacionRechazarFactura','btnCancelarRechazo','waves-effect waves-light btn anchoMax btnRechazar',"cerrarModal('modalConfirmacionRechazarFactura')",'Cancelar',false)
+    addBoton('modalContenedorBtnConfirmacionRechazarFactura','btnAceptarRechazo','waves-effect waves-light btn anchoMax btnAceptar',"confirmarRechazarFactura(formularioRechazarFactura)",'Rechazar',false)
+    abrirModal('modalGeneral')
+    abrirModal('modalConfirmacionRechazarFactura')
+  }
+  function confirmarRechazarFactura(formulario){
+    var infoRechazo = validarFormulario('#formularioRechazarFactura textarea.campoRellenable, #formularioRechazarFactura input.campoRellenable','#formularioRechazarFactura textarea.campoRellenable.valido , #formularioRechazarFactura input.campoRellenable.valido',1);
+    if (infoRechazo) {
+      cerrarModal('modalConfirmacionRechazarFactura')
+      document.getElementById('modalContenidoConfirmacionRechazarFactura').innerHTML=''
+      mostrarOcultarLoaderGeneral('cargaEnvioGeneral','textoCargaGeneral',"Rechazando factura",'ocultarImportant','carga')
+      google.script.run
+      .withSuccessHandler(function (value) {
+        mostrarOcultarLoaderGeneral('cargaEnvioGeneral','textoCargaGeneral',"",'carga','ocultarImportant')
+        cerrarModal('modalGeneral')
+        google.script.run
+        .withSuccessHandler(function (value) {
+          const mensaje = ''
+          mensaje +="Se ha enviado un correo al proveedor: "+value.usuarioReceptor+"\n" 
+          mensaje +="Recuerda ponerte  en contacto con el proveedor \n" 
+          generarAviso('¡Factura rechazada !','success',false,false,mensaje)
+          actualizarTablasFacturas(value)
+        }).obtenerDatosTablaBQ(datosFirma1, true); 
+      }).rechazarFactura(formulario); 
+    }else{
+      generarAviso('¡Añade el motivo de rechazo!','error',false,false,'Para realizar la accion de rechazar debemos añadir un moptivo antes')
+    }
+  }
+</script>
+<!-- Contabilizado a mano -->
+<script>
+  
+  function contabilizarMano(formulario){
+    habilitarCamposDeEntrada('formularioContabilizacion')
+    if(validarFormularioFirmadosNoVacio()){
+      mostrarOcultarLoaderGeneral('cargaEnvioGeneral','textoCargaGeneral',"Contabilizando a mano",'ocultarImportant','carga')
+      google.script.run
+      .withSuccessHandler(function (value) {
+        var mensaje = ''
+        mensaje +="Contabilizado a mano:\n" 
+        mostrarOcultarLoaderGeneral('cargaEnvioGeneral','textoCargaGeneral',"",'carga','ocultarImportant')
+        cerrarModal('modalGeneral')
+        generarAviso('¡Contabilizado a mano!','success',false,false,mensaje)
+      }).contabulizarManoGs(formulario);  
+    }
+  } 
+function validarFormularioFirmadosNoVacio() {
+    document.getElementById("selectProveedor").disabled = false;
+    document.getElementById("selectProvedor").disabled = false;
+    // Selecciona todos los elementos padres con la clase validarCamposFran
+    var padres = document.querySelectorAll('.validarCamposFran');
+
+    // Variable para almacenar los nombres de los campos vacíos
+    var camposVacios = [];
+
+    // Recorre todos los elementos padres seleccionados
+    padres.forEach(function(padre) {
+        // Busca el input dentro del padre
+        var input = padre.querySelector('input, select, textarea');
+
+        // Verifica si el valor del input está vacío
+        if (input.value.trim() === '') {
+            // Obtiene el texto del label asociado al input
+            var label = padre.querySelector('label').innerText;
+            // Almacena el nombre del campo vacío
+            camposVacios.push(label);
+        }
+    });
+
+    // Si hay campos vacíos, muestra una alerta con los nombres de los campos
+    if (camposVacios.length > 0) {
+        var mensaje = 'Por favor, complete los siguientes campos:\n\n';
+        camposVacios.forEach(function(nombreCampo) {
+            mensaje += '- ' + nombreCampo + '\n';
+        });
+        Swal.fire({
+        icon: "error",
+        title: mensaje
+        });
+        document.getElementById("selectProveedor").disabled = true;
+        document.getElementById("selectProvedor").disabled = true;
+        return false;
+    }
+
+    // Retorna true si no hay ningún campo vacío
+    return true;
+}
+</script>
+
+<!-- Adjuntar albaranes al expediente -->
+<script>
+  function adjuntarAlbaranesAlaFactura2(formulario,dato1,dato2,dato3,datos){
+    var valorInputAlbaranes = document.getElementById('arrayAlbaranesPorAdjuntar').value;
+    //var valorInputAlbaranes = document.getElementById('arrayAlbaranes').value;
+    mostrarOcultarLoaderGeneral('cargaEnvioGeneral','textoCargaGeneral',"Adjuntando albaranes a la factura",'ocultarImportant','carga')
+    // Verificar si el valor no está vacío
+    if (valorInputAlbaranes.trim() !== '') {
+      google.script.run
+      .withSuccessHandler(function (value) { 
+
+        //ALBARANES SIN ASIGNAR DE LA LICITACION
+        const albaranesSinAsignar = albaranes.filter(albaran => {
+          console.log(albaran)
+          console.log(datos)
+            return albaran[2] === datos[3] && albaran[6] === '';
+        });
+        //Damos el formato deseado [{},{}] A LOS ALBARANES
+        const conjuntoAlbaranes = albaranesSinAsignar.map(item => {
+          const id = item[4]; // Puedes ajustar el índice según la posición del ID en tus datos
+          const urlArchivoAlbaran = item[5];
+          const fechaAlbaran = item[3];
+          return { [id]: { fechaAlbaran, urlArchivoAlbaran } };
+        });
+        var conjuntoAlbaranesString = JSON.stringify(conjuntoAlbaranes);
+        generarAviso('¡Albaranes adjunto!','success',false,false,'Los albaranes se adjunta al pedido: '+dato1);
+        document.getElementById('informacionAlbaran2').innerHTML=''
+        mostrarOcultarLoaderGeneral('cargaEnvioGeneral','textoCargaGeneral',"",'carga','ocultarImportant')
+        actualizarDatosAlbaranes(datos)
+        generarComponeneteDataListAlbaran(conjuntoAlbaranesString);
+      }).adjuntarAlbaranesAlaFacturaGs(formulario);
+    } else {
+      mostrarOcultarLoaderGeneral('cargaEnvioGeneral','textoCargaGeneral',"",'carga','ocultarImportant')
+      // El valor está vacío, puedes mostrar un mensaje de error o realizar alguna acción en consecuencia
+      generarAviso('¡No has seleccionado ningun albaran para adjuntar a la factura','success',false,false,'Debe seleccionar un minimo de un albaran para añadirlo a la factura');
+    }
+  }
+</script>
+
+<!-- Ver documentacion -->
+<script>
+  function abrirDocumentacion(a){
+
+    addModal('modalVerDocumentacion','modalEncabezadoVerDocumentacion','modalEncabezadoTituloVerDocumentacion','','','modalContenidoVerDocumentacion','modalContenedorBtnVerDocumentacion')
+    document.getElementById('modalContenidoVerDocumentacion').innerHTML=''
+    addDiv('modalContenidoVerDocumentacion','carrusel-enlaces2')
+    addDiv('modalContenidoVerDocumentacion','carrusel-enlaces')
+    addTitulo('h5', 'carrusel-enlaces', 'Albaranes');
+    addTitulo('h5', 'carrusel-enlaces2', 'Albaranes');
+    var carruselAlbaran = $("#carrusel-enlaces");
+    var carrusel1 = $("#carrusel-enlaces2");
+    // Iterar sobre el array de objetos
+    a.forEach(function (albaran, index) {
+      const numeroAlbaran = Object.keys(albaran)[0];
+      // Obtener la información del albarán
+      const infoAlbaran = albaran[numeroAlbaran];
+      // Utilizar la función addFrame con la información del albarán
+      addFrame(carruselAlbaran, [infoAlbaran.urlArchivoAlbaran], `Albaran ${numeroAlbaran}: `, 1, '');
+    });
+    abrirModal('modalGeneral')
+    abrirModal('modalVerDocumentacion')
+ }
+</script>
+
+<!-- FIRMAR -->
+
+<!--Firma factura, abre modal de confirmacion -->
+<script>
+  function adjuntarAlbaranes(formulario, dato1, dato2, dato3, children,conjuntoAlbaranesAsignados) {
+    if (archivosFacturasEnEspera === 0) {
+      var existingModal = document.getElementById('modalConfirmacionFirmaFactura');
+      if (!existingModal) {
+        addModal('modalConfirmacionFirmaFactura', 'modalEncabezadoConfirmacionFirmaFactura', 'modalEncabezadoTituloConfirmacionFirmaFactura', '', '', 'modalContenidoConfirmacionFirmaFactura', 'modalContenedorBtnConfirmacionFirmaFactura');
+        //document.getElementById('modalContenidoConfirmacionFirmaFactura').classList.add('max')
+      }
+
+      document.getElementById('modalEncabezadoConfirmacionFirmaFactura').innerHTML = '';
+      document.getElementById('modalContenidoConfirmacionFirmaFactura').innerHTML = '';
+      document.getElementById('modalContenedorBtnConfirmacionFirmaFactura').innerHTML = '';
+      document.getElementById('modalContenidoConfirmacionFirmaFactura').classList.add('max');
+
+      addDiv('modalContenidoConfirmacionFirmaFactura', 'contedorResumenFactura', 'flexW carta col s12');
+      if(conjuntoAlbaranesAsignados.length > 0){
+        addTitulo('h5','modalContenidoConfirmacionFirmaFactura', "Albaranes Adjuntos",'sinclase',"")
+      }
+      addDiv('modalContenidoConfirmacionFirmaFactura', 'contedorResumenAlbaranes', 'clasefilaalbaranes');
+
+      generarElementoDinamico('modalEncabezadoConfirmacionFirmaFactura', 'labelNFactura', 'Nº factura', dato1);
+      generarElementoDinamico('modalEncabezadoConfirmacionFirmaFactura', 'labelNExpediente', 'NºExpediente', dato2);
+      generarElementoDinamico('modalEncabezadoConfirmacionFirmaFactura', 'labelAsunto', 'Asunto', dato3);
+      generarElementoDinamico('modalEncabezadoConfirmacionFirmaFactura', 'labelFirmarRechazar', 'Firmar/rechazar', 'Pendiente');
+      generarIconoMaterial('modalEncabezadoConfirmacionFirmaFactura');
+
+      //addTitulo('h4','modalContenidoConfirmacionFirmaFactura','Resumen')
+      var formData = new FormData(formulario);
+      // Iterar sobre los campos del formulario
+      formData.forEach(function (value, key) {
+      });
+
+
+      // Convertir FormData a objeto para tener acceso más fácil
+      var formObject = {};
+      formData.forEach(function (value, key) {
+        formObject[key] = value;
+      });
+
+      if(formObject.arrayAlbaranes !== 'Sin albaranes'){
+        var ss = JSON.parse(formObject.arrayAlbaranes);
+        addAlbaranesResumen(ss);
+      }
+
+      if(formObject.idArchivoFactura){
+        addFacturaResumen(formObject.idArchivoFactura);
+      }
+      addBoton('modalContenedorBtnConfirmacionFirmaFactura', 'btnActualizarSage', 'waves-effect waves-light btn anchoMax btnRechazar', "cerrarModal('modalConfirmacionFirmaFactura')", 'Cancelar', false);
+      addBoton('modalContenedorBtnConfirmacionFirmaFactura', 'btnActualizarSage', 'waves-effect waves-light btn anchoMax btnAceptar', "confirmacionFirmarFactura(formularioFirmarFactura)", 'Firmar', false);
+
+/**.Alvaro, vaciamos y volvemos a rellenar el div de los albaranes adjuntos */
+      //albaranesAsignados.  //contedorResumenAlbaranes
+      document.getElementById('contedorResumenAlbaranes').innerHTML = '';
+      for(var j = 0; j < conjuntoAlbaranesAsignados.length; j++){
+        addDiv('contedorResumenAlbaranes','divpdfalbaran2'+j,'clasedivalbaranes')
+        //addTitulo(elemetoHtml,idContenedor,texto,clase,id)
+        var texto_albaran ="Nº Alb: " + Object.keys(conjuntoAlbaranesAsignados[j]) + " ; Fecha: "+conjuntoAlbaranesAsignados[j][Object.keys(conjuntoAlbaranesAsignados[j])].fechaAlbaran
+        addTitulo('p','divpdfalbaran2'+j, texto_albaran,'claseparrafoalbaranes','albaran_dinamico_2'+j)
+        //addIcono(contenedor, archivos,titulos,clase,tipoIcono,link) 
+        addIcono('divpdfalbaran2'+ j, [conjuntoAlbaranesAsignados[j][Object.keys(conjuntoAlbaranesAsignados[j])].urlArchivoAlbaran], [''],"Small material-icons btnPdf","picture_as_pdf",true)
+      }
+
+
+      abrirModal('modalGeneral');
+      abrirModal('modalConfirmacionFirmaFactura');
+      //generarAviso('¡Ningun elemento completo!','error',false,false,'')
+    } else {
+      mostrarOcultarLoaderGeneral('cargaEnvioGeneral', 'textoCargaGeneral', "Añadiendo archivos.", 'ocultarImportant', 'carga');
+      for (var i = 0; i < children; i++) {
+        // Construct the ID for each set of inputs
+        var setID = 'contenedorSecundario' + i;
+        var contendorImg = document.getElementById('listaImg' + i);
+        if (contendorImg) {
+          var contendorImgHijo = contendorImg.children;
+          // Retrieve inputs within each set
+          var nAlbaranValue = document.getElementById('nAlbaran' + i).value;
+          var fechaAlbaranValue = document.getElementById('fechaAlbaran' + i).value;
+          subirArchivoAlbaran('.obj' + i, 'idArchivoAlbaran' + i, dato1, dato2, dato3);
+        }
+      }
+    }
+  }
+</script>
+<!-- Confirmar firma factura -->
+<script>
+  function confirmacionFirmarFactura(formulario){
+    cerrarModal('modalConfirmacionFirmaFactura')
+    mostrarOcultarLoaderGeneral('cargaEnvioGeneral','textoCargaGeneral',"Firmando factura.",'ocultarImportant','carga')
+    google.script.run
+    .withSuccessHandler(function (value) { 
+      generarAviso('¡Factura firmada!','success',false,false,'')
+      mostrarOcultarLoaderGeneral('cargaEnvioGeneral','textoCargaGeneral',"",'carga','ocultarImportant')
+      cerrarModal('modalGeneral')
+      document.body.style.overflow = 'scroll';
+      google.script.run
+      .withSuccessHandler(function (value) {
+        actualizarTablasFacturas(value)
+      }).obtenerDatosTablaBQ(datosFirma1, true); 
+    }).firmaFactura(formulario);  
+  }
+
+</script>
+
+<!--Resumen-->
+<script>
+  //Resumen
+  function addFacturaResumen(idArchivo) {
+    var archivosDiv = document.getElementById('contedorResumenFactura');
+    archivosDiv.innerHTML = ''; // Limpiar el contenido anterior
+    addTitulo('h5','contedorResumenFactura','Resumen factura')
+    var divFacturaResumen = document.createElement('div');
+    divFacturaResumen.className='flexRCC'
+    var tituloFacturaResumen = document.createElement('p');
+    tituloFacturaResumen.innerHTML='Factura :'
+    var enlaceDescarga = document.createElement('a');
+    enlaceDescarga.href = idArchivo;
+    enlaceDescarga.target = '_blank';
+    var iconoDescarga = document.createElement('i');
+    iconoDescarga.className = 'material-icons left btnPdf';
+    iconoDescarga.textContent = 'picture_as_pdf';
+    // Construir la estructura del enlace de descarga
+    enlaceDescarga.appendChild(iconoDescarga);
+    divFacturaResumen.appendChild(tituloFacturaResumen);
+    divFacturaResumen.appendChild(enlaceDescarga);
+    // Agregar los elementos creados al contenedor
+    archivosDiv.appendChild(divFacturaResumen);
+  }
+
+  //Resumen
+  function addAlbaranesResumen(archivos) {
+    var archivosDiv = document.getElementById('contedorResumenAlbaranes');
+    // Limpiar el contenido anterior
+    archivosDiv.innerHTML = '';
+    archivos.forEach(function(archivo) {
+      var idArchivo = Object.keys(archivo)[0];
+      var detallesArchivo = archivo[idArchivo];
+
+      // Crear elementos HTML de manera dinámica
+      var divArchivo = document.createElement('div');
+      divArchivo.className = 'flexRCC';
+
+      var divArchivo1 = document.createElement('div');
+      var divArchivo2 = document.createElement('div');
+
+
+      var parrafoAlbaran = document.createElement('p');
+      parrafoAlbaran.textContent = 'NºAlbarán: ' + idArchivo;
+
+      var parrafoFecha = document.createElement('p');
+      parrafoFecha.textContent = 'Fecha de Albarán: ' + detallesArchivo.fechaAlbaran;
+
+      var parrafoURL = document.createElement('p');
+      var enlaceDescarga = document.createElement('a');
+      enlaceDescarga.href = detallesArchivo.urlArchivoAlbaran;
+      enlaceDescarga.target = '_blank';
+      var iconoDescarga = document.createElement('i');
+      iconoDescarga.className = 'material-icons left btnPdf';
+      iconoDescarga.textContent = 'picture_as_pdf';
+      
+      // Construir la estructura del enlace de descarga
+      enlaceDescarga.appendChild(iconoDescarga);
+      parrafoURL.appendChild(enlaceDescarga);
+
+      // Agregar los elementos al div del archivo
+
+      divArchivo1.appendChild(parrafoAlbaran);
+      divArchivo1.appendChild(parrafoFecha);
+      divArchivo2.appendChild(parrafoURL);
+      divArchivo.appendChild(divArchivo1);
+      divArchivo.appendChild(divArchivo2);
+
+
+      // Agregar el div del archivo al contenedor
+      archivosDiv.appendChild(divArchivo);
+    });
+
+    // Mostrar la cantidad de archivos seleccionados
+    var parrafoTotalArchivos = document.createElement('p');
+    parrafoTotalArchivos.textContent = 'Albaranes seleccionados: ' + archivos.length;
+    archivosDiv.appendChild(parrafoTotalArchivos);
+  }
+</script>

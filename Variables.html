@@ -1,0 +1,65 @@
+<script>
+  var usuarios = [];
+  var expedientes = [];
+  var albaranes = [];
+  var arrayExpedientesDisponibles = [];
+  var facturasRealizar = [];
+  var facturasSolicitar = [];
+  var objetoControlGS = {};
+  var arrayFacturas = [];
+  var infoCM = {};
+  var infoLI = {};
+  var infoNG = {};
+  var datosCombinados = {};
+
+  var arrayFacturasGlobal = [];
+  var cuentaCorrienteGlobal = [];
+  
+  var nProcesos=0
+  var contadorInputsFactura=0
+  var contadorInputsAlbaranes=0
+  var archivosFacturasEnEspera=0 //comentado por fran
+  var numArchivos=0
+  var currentIndex = 0;
+
+  var datos_exp_abrirModalAdjuntarFactura // Alvaro y Fran
+
+  var arrayAlbaranesAdd=[]
+  var idsArchivos = []
+  var tiposDeArchivos = [
+    "image/apng",
+    "image/bmp",
+    "image/gif",
+    "image/jpeg",
+    "image/pjpeg",
+    "image/png",
+    "image/svg+xml",
+    "image/tiff",
+    "image/webp",
+    "image/x-icon",
+    "application/pdf"
+  ]
+  
+  var nombreHojaFacturas='Facturas'
+  var nombreHojaFacturasSage='Facturas Enviadas a SAGE'
+  var nombreHojaAlbaranes ='Albaranes'
+  var nombreHojaExpedientes ='Expedientes_pedidos'
+  var nombreHojaFacturasSolicitarFirma = 'Facturas'
+  var idLibroFacturas = '12_z17iG_GyRFpf0F0XbcRJy6651_6ECwOMP7NEcVtSU'
+  var idTablaFirmas ='12_z17iG_GyRFpf0F0XbcRJy6651_6ECwOMP7NEcVtSU'
+  var idLibroExpedientes ='1DOHT9xaFxFFb0ueaYzXxnxaMzrzfnlv5v0c-uwjIovw'
+  var contratacion = 'contratacion@esmasalcorcon.com'
+  var nombreHojaFacturasFirmasRealizadas = 'Facturas Enviadas a SAGE'
+  var idProyectoBigquery = 'datos-transversales'
+  var idDatasetContabilidad ='DATOS_BBDD_Contabilidad'
+  var idTablaFacturas = 'tabla_BBDD_Facturas'
+  var idTablaAlbaranes = 'tabla_BBDD_Albaranes'
+  var idTablaHistorialAlbaranes = 'tabla_BBDD_Historial_Albaranes'
+
+  //const datosExpedientes = [idLibroExpedientes, nombreHojaExpedientes];
+  const datosControlFacturas = [idTablaFirmas, nombreHojaFacturas];
+  const datosEnvioSage = [idTablaFirmas, nombreHojaFacturasSage];
+  const datosFirma1 = [idProyectoBigquery,idDatasetContabilidad,idTablaFacturas]
+  const datosFirma2 = [idTablaFirmas, nombreHojaFacturasSage];
+  const datosAlbaranes = [idProyectoBigquery,idDatasetContabilidad,idTablaAlbaranes]
+</script>

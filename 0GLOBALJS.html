@@ -1,0 +1,2545 @@
+<!-------------Funciones auxiliares abrir modal revisar factura solicitada ----------------------->
+<script>
+    function crearHTMLDataTable(idContenedorPadre, idDado, tituloDeTabla) {
+    // Crear el elemento div padre
+    var divPadre = document.createElement("div");
+    divPadre.id = "divPadre" + idDado;
+    divPadre.className = "divpadretabla";
+
+    // Crear el elemento div con título y tabla
+    var divTituloyTabla = document.createElement("div");
+    divTituloyTabla.className = "divtituloytabla";
+
+    var divTitulo = document.createElement("div");
+    divTitulo.className = "divtitulotabla";
+
+    // Crear el título de la tabla
+    var tituloTabla = document.createElement("h5");
+    tituloTabla.className = "titulotabla";
+    tituloTabla.id = "titulo" + idDado;
+    tituloTabla.textContent = tituloDeTabla; // Establecer el texto del título
+    divTitulo.appendChild(tituloTabla);
+
+    var divloaderyactualizador = document.createElement("div");
+    divloaderyactualizador.className = "divloaderyactualizador";
+
+    // Crear Actualizador de la tabla
+    var tituloactualizaciontabla = document.createElement("h5");
+    tituloactualizaciontabla.className = "tituloactualizaciontabla";
+    tituloactualizaciontabla.id = "tituloactualizacion" + idDado;
+    tituloactualizaciontabla.textContent = ""; // Establecer el texto del título
+
+    // crearLoaderCargarDatos(divloaderyactualizador,"tituloactualizacion" + idDado)
+    // divloaderyactualizador.appendChild(tituloactualizaciontabla);
+    // divTitulo.appendChild(divloaderyactualizador);
+
+    // Crear el div de la tabla de pintores
+    var divTablaPINTORES = document.createElement("div");
+    divTablaPINTORES.className = "divTabla";
+
+    // Crear la tabla
+    var tabla = document.createElement("table");
+    tabla.id = "tabla" + idDado;
+    tabla.className = "table table-hover table-striped table-bordered display estiloTablas";
+    tabla.setAttribute("cellspacing", "0");
+    tabla.setAttribute("width", "100%");
+
+
+    // // Agregar la tabla al div de la tabla de pintores
+    // divTablaPINTORES.appendChild(tabla);
+
+    // Agregar el título y el div de la tabla de pintores al div con título y tabla
+    divTituloyTabla.appendChild(divTitulo);
+    // divTituloyTabla.appendChild(divTablaPINTORES);
+
+    // Agregar el div con título y tabla al div padre
+    divPadre.appendChild(divTituloyTabla);
+    var contenedor = document.getElementById(idContenedorPadre);
+    // Agregar el div padre al contenedor padre especificado
+    contenedor.appendChild(divPadre);
+}
+
+  /** Transforma un String JSON a un objeto JSON/Array y devuelve la longitud del array , lo uso en generar columnas para recuperar el nº de albaranes */
+  function obtenerLongitudArrayParaNumAlbaranes(jsonString) {
+
+      try {
+ 
+          if (jsonString === "Sin albaranes" || jsonString === "[]") {
+              return 0;
+          }
+          
+          const array = JSON.parse(jsonString);
+          
+          if (Array.isArray(array)) {
+              return array.length;
+          } else {
+              return 0;
+          }
+      } catch (error) {
+          return 0;
+      }
+  }
+  
+  function addComponenteImgBlur(){
+    var inputHtmlNalbaran=  addComponenteImg()
+    inputHtmlNalbaran.miVariable = 0
+    inputHtmlNalbaran.addEventListener('blur', function(event) {
+      contadorInputsFactura++;
+      if (inputHtmlNalbaran.miVariable==0) {
+        addComponenteImgBlur()
+        inputHtmlNalbaran.miVariable=1 
+      }
+    });
+  }
+  
+  function addComponenteImg (){
+    addDiv('contenedorSecundario','contenedorSecundario'+contadorInputsFactura,'flexW carta col s12')
+    addDiv('contenedorSecundario'+contadorInputsFactura,'seccionAlbaran1-'+contadorInputsFactura,'flexCRSB col s12 m6 l8')
+    var inputHtmlNalbaran=addInput('seccionAlbaran1-'+contadorInputsFactura,'nAlbaran'+contadorInputsFactura,'text','Nº Albarán','campoRellenable','col s12 m6 l6 input-field','retornoInput')
+    /** FRAN CREAMOS ESCUCHADOR PARA LO QUE SALGA ALBARANES SIN FACTURAS ASIGNADAS*/
+    document.getElementById('seccionAlbaran1-'+contadorInputsFactura).addEventListener("change", function() {
+    escuchadorAdjuntarAlbaranesInput(inputHtmlNalbaran);
+    });
+    rellenarDatalistConArrayExistentesFran('nAlbaran'+contadorInputsFactura)
+
+    addInput('seccionAlbaran1-'+contadorInputsFactura,'fechaAlbaran'+contadorInputsFactura,'date','Fecha','campoRellenable','col s12 m6 l6 input-field','retornoInput')
+    crearInputImgGeneral('contenedorSecundario'+contadorInputsFactura,'contenedorArchivos'+contadorInputsFactura,'tituloPPT','','archivos'+contadorInputsFactura,'box'+contadorInputsFactura,'drop_zone'+contadorInputsFactura,'infoImg'+contadorInputsFactura,'obj'+contadorInputsFactura,'listaImg'+contadorInputsFactura,"elementoFlex img"+contadorInputsFactura,'idArchivoAlbaran'+contadorInputsFactura,'contenedorSecundario'+contadorInputsFactura,'cssContenedorImg2','.jpg, .jpeg, .png, .pdf')
+    return inputHtmlNalbaran
+  }
+  /** funcion que ocultara los campos en caso de que exista */
+  function escuchadorAdjuntarAlbaranesInput(idInputRecibido) {
+    var input = idInputRecibido;
+    var value = input.value;
+    var numero = input.id.match(/\d+$/)[0];
+    var datalist = document.getElementById('datalistAlbaranesSinFactura');
+    var contenedorArchivos = document.getElementById('contenedorArchivos'+numero);
+    var divPadre = "seccionAlbaran1-"+numero
+    var segundoDiv = document.querySelector('#'+divPadre+' > div:nth-child(2)');
+    console.log("numero " + numero)
+    console.log("contenedorArchivos " + contenedorArchivos)
+    
+    var options = datalist.querySelectorAll('option');
+    var found = false;
+
+    options.forEach(function(option) {
+        if (option.value === value) {
+            found = true;
+            return;
+        }
+    });
+
+    if (found) {
+        // Hacer algo si el valor está en el datalist
+        console.log('El valor está en el datalist.');
+         contenedorArchivos.hidden = true;
+         segundoDiv.hidden = true;
+    } else {
+        // Hacer algo si el valor no está en el datalist
+        console.log('El valor no está en el datalist.');
+        contenedorArchivos.hidden = false;
+        segundoDiv.hidden = false;
+    }
+  }
+    /**Funcion adjuntar albaranes al expediente */
+function adjuntarAlbaranesAlExpediente() {
+  console.group("📎 adjuntarAlbaranesAlExpediente");
+
+  var datalist = document.getElementById('datalistAlbaranesSinFactura');
+  var options = datalist ? datalist.querySelectorAll('option') : [];
+  var found = false;
+
+  console.log("▶ options datalist:", options.length);
+
+  var containerElement = document.getElementById('contenedorSecundario');
+  if (!containerElement) {
+    console.error("❌ No existe contenedorSecundario");
+    console.groupEnd();
+    return;
+  }
+
+  var chil = containerElement.children;
+  var numerosIdElementos = [];
+
+  console.group("🔢 Extrayendo IDs hijos");
+  for (var i = 0; i < chil.length; i++) {
+    var nombreHijo = chil[i].id;
+    var match = nombreHijo.match(/\d+$/);
+
+    if (!match) {
+      console.warn("⚠️ ID sin número:", nombreHijo);
+      continue;
+    }
+
+    var numero = parseInt(match[0]);
+    numerosIdElementos.push(numero);
+    console.log("✔ Hijo:", nombreHijo, "→", numero);
+  }
+  console.groupEnd();
+
+  var arrayChildensConImagen = [];
+
+  console.group("🧪 Evaluando cada bloque");
+  for (var i = 0; i < numerosIdElementos.length; i++) {
+    var id = numerosIdElementos[i];
+    console.group("🔹 Iteración ID:", id);
+
+    var nAlbaranInput = document.getElementById('nAlbaran' + id);
+    var fechaInput = document.getElementById('fechaAlbaran' + id);
+    var contendorImg = document.getElementById('listaImg' + id);
+
+    var nAlbaranValue = nAlbaranInput ? nAlbaranInput.value : "";
+    var nFechaValue = fechaInput ? fechaInput.value : "";
+
+    console.log("nAlbaran:", nAlbaranValue);
+    console.log("fechaAlbaran:", nFechaValue);
+    console.log("contenedorImg existe:", !!contendorImg);
+
+    if (nAlbaranValue !== "") {
+      console.log("➡️ Tiene número de albarán, comprobando duplicados");
+
+      options.forEach(function(option) {
+        if (option.value === nAlbaranValue) {
+          found = true;
+          console.warn("⚠️ Albarán duplicado:", nAlbaranValue);
+
+          if (fechaInput) fechaInput.value = "";
+          var idArchivo = document.getElementById('idArchivoAlbaran' + id);
+          if (idArchivo) idArchivo.value = "";
+        }
+      });
+
+      if (contendorImg && nFechaValue !== "") {
+        console.log("✅ Imagen + fecha → se añade a procesar");
+        arrayChildensConImagen.push(id);
+      } else {
+        console.log("⛔ Falta imagen o fecha");
+      }
+    } else {
+      console.log("⛔ No hay número de albarán");
+    }
+
+    console.groupEnd();
+  }
+  console.groupEnd();
+
+  console.log("📦 arrayChildensConImagen:", arrayChildensConImagen);
+  console.log("🔎 found duplicados:", found);
+
+  if (!found && arrayChildensConImagen.length === 0) {
+    console.warn("❌ Ningún elemento válido");
+    generarAviso('¡Ningun elemento completo!', 'error', false, false, '');
+    console.groupEnd();
+    return;
+  }
+
+  mostrarOcultarLoaderGeneral(
+    'cargaEnvioGeneral',
+    'textoCargaGeneral',
+    "Añadiendo archivos.",
+    'ocultarImportant',
+    'carga'
+  );
+
+  if (arrayChildensConImagen.length > 0) {
+    archivosFacturasEnEspera = arrayChildensConImagen.length;
+    console.log("⏳ Archivos en espera:", archivosFacturasEnEspera);
+
+    arrayChildensConImagen.forEach(function(id) {
+      console.group("⬆️ Subiendo archivo ID:", id);
+
+      var contendorImg = document.getElementById('listaImg' + id);
+      if (!contendorImg) {
+        console.warn("⚠️ No hay imágenes para ID:", id);
+        console.groupEnd();
+        return;
+      }
+
+      subirArchivoAlbaranModificado(
+        '.obj' + id,
+        'idArchivoAlbaran' + id,
+        arrayChildensConImagen
+      );
+
+      console.groupEnd();
+    });
+
+  } else {
+    console.log("📭 No hay archivos, comprobando fotos");
+    archivosFacturasEnEspera = 0;
+    comprobarFotosAlbaranes();
+  }
+
+  console.groupEnd();
+}
+
+
+</script>
+<!------------------------------- Componente img -------------------------------------------------->
+<script>
+  function crearInputImgGeneral(idContenedorPrincipal,idContenedor,idTitulo,textoTitulo,inputIdName,idContenedorPreview,idContenedorDropZone,idInfoImg,obj,idListaImg,clase,idInputIdArchivos,idLugarColocar,claseContenedor,tipoAceptado){
+    //Contenedor principal donde vamos a cargar los elementos
+    var contendorHtml=document.getElementById(idContenedorPrincipal)
+    var contendorInput=document.getElementById(idLugarColocar)
+    //Creamos div padre
+    var divElement = document.createElement('div');
+    divElement.classList.add('flexRowSpaceEvenlyWrap', 'col','s12', 'm6', 'l4', 'row');
+
+    //Creamos el elemento hijo div
+    var childDivElement = document.createElement('div');
+    childDivElement.classList.add('flexRowSpaceEvenlyWrap', 'col', 's12', 'm12', 'l12', 'row');
+    childDivElement.setAttribute('id', idContenedor);
+
+    // Creamos el titulo del campo 
+    var h5Element = document.createElement('h5');
+    h5Element.classList.add('center');
+    h5Element.setAttribute('id', idTitulo);
+    h5Element.textContent = textoTitulo;
+
+    // Crear el elemento div dentro de archivoEmpresa
+    var archivoEmpresaDiv = document.createElement('div');
+    archivoEmpresaDiv.classList.add('campo', 'col', 's12', 'm12', 'l12', 'row','archivoEmpresa');
+
+    var inputIdArchivo = document.createElement('input');
+    inputIdArchivo.setAttribute('type', 'text');
+    inputIdArchivo.setAttribute('id', idInputIdArchivos);
+    inputIdArchivo.setAttribute('name', idInputIdArchivos);
+    inputIdArchivo.setAttribute('class', 'ocultar');
+
+    // Crear el elemento de entrada de archivo
+    var inputFileElement = document.createElement('input');
+    inputFileElement.setAttribute('type', 'file');
+    inputFileElement.setAttribute('id', inputIdName);
+    inputFileElement.setAttribute('name', inputIdName);
+    inputFileElement.setAttribute('capture', 'camera');
+    inputFileElement.setAttribute('multiple', '');
+    inputFileElement.setAttribute('class', 'col s12 m12 l12');
+    inputFileElement.setAttribute('accept', tipoAceptado);
+    // Crear el elemento de vista previa
+    var previewDiv = document.createElement('div');
+    previewDiv.setAttribute('class','preview col s12 m12 l12');
+    previewDiv.setAttribute('id', idContenedorPreview);
+    previewDiv.setAttribute('for', inputIdName);
+
+    // Crear el elemento de drop zone
+    var dropZoneDiv = document.createElement('div');
+    dropZoneDiv.classList.add(claseContenedor);
+    dropZoneDiv.setAttribute('id', idContenedorDropZone);
+
+    // Crear el elemento de etiqueta de información de imagen
+    var infoLabel = document.createElement('label');
+    infoLabel.setAttribute('id', idInfoImg);
+
+    var pElement = document.createElement('p');
+    pElement.classList.add('box_start');
+    pElement.textContent = 'No hay archivos seleccionados ...';
+
+    // Añadir elementos secundarios al elemento principal
+    infoLabel.appendChild(pElement);
+    dropZoneDiv.appendChild(infoLabel);
+    previewDiv.appendChild(dropZoneDiv);
+    archivoEmpresaDiv.appendChild(inputFileElement);
+    archivoEmpresaDiv.appendChild(previewDiv);
+    childDivElement.appendChild(h5Element);
+    childDivElement.appendChild(archivoEmpresaDiv);
+    divElement.appendChild(childDivElement);
+    contendorInput.appendChild(inputIdArchivo);
+
+    // Añadir el elemento principal al cuerpo del documento
+    contendorHtml.appendChild(divElement);
+
+    inputFileElement.addEventListener("change", () => actualizarDivImagen(previewDiv, inputFileElement, obj, idContenedorDropZone, idListaImg, "elimnarElemento", clase, idContenedorPreview, inputIdName,idInputIdArchivos,idsArchivos), { passive: true });
+  }
+</script>
+<!----------------------------- ACTUALIZAR FACTURAS ----------------------------------------------->
+<script>
+  function actualizarTablasFacturas(value){
+
+    var pendientesDeRevision
+    document.getElementById('contenedorTablas').classList.remove('ocultarImportant')
+    document.getElementById('contenedorLoad').classList.add('ocultarImportant')
+    //Cabezera factura
+    const cabezeraFacturaSolicitar = value[0];
+    //Datos facturas
+    const datosFacturaSolicitar = value.slice(1);
+    arrayFacturasGlobal = datosFacturaSolicitar;
+    
+    //Filtramos por usuario
+    const datosFacturaSolicitarUsuario = datosFacturaSolicitar.filter(row => row[6]==usuario.infoUsuario[2]);
+   
+    if(usuario.infoUsuario[5]=='UA' || usuario.infoUsuario[5]=='UE'){
+      //Facturas pendientes de firma
+      pendientesDeRevision = datosFacturaSolicitar.filter(row => row[10] === "Pendiente de revisión");     
+    }else{
+      pendientesDeRevision = datosFacturaSolicitarUsuario.filter(row => row[10] === "Pendiente de revisión");       
+    }
+
+    //Facturas que no esten en el estado Pendiente de revision
+    const facturasNoFirmadas = datosFacturaSolicitar.filter(row => row[10] !== "Pendiente de revisión").map(row => {
+    if(row[12] == ""){
+      row[12] = row[9] + " - " + row[19];
+    }
+    return row;
+    });
+    //Columnas
+
+
+    const datosFacturasPendientesDeFirma =obtenerArrayFacturasPendientesDeFirmar(cabezeraFacturaSolicitar)
+    const datosFacturasFirma =obtenerArrayFacturasFirma(cabezeraFacturaSolicitar)
+    const columnasFacturasSolicitar = generarColumnas(datosFacturasPendientesDeFirma,"tablaControlSolicitudFirma");
+    const columnasFacturaFirmas = generarColumnas(datosFacturasFirma,"tablaContabilizar"); 
+
+    actualizarTabla('#tablaContabilizar', facturasNoFirmadas, cabezeraFacturaSolicitar, columnasFacturaFirmas,[6]);
+    actualizarTabla('#tablaControlSolicitudFirma', pendientesDeRevision, cabezeraFacturaSolicitar, columnasFacturasSolicitar,[4,9]);
+  }
+</script>
+<!---------------------------------- COLUMNAS ------------------------------------------------------>
+<script>
+  function obtenerArrayFacturasPendientesDeFirmar(cabezeraFacturaSolicitar){
+    const datosColumnasFacturasSolicitar = [
+      //Revisar
+      //[titulo, indice, tipo,idBtn,nombreClase,icono]
+      ['', 0, 'boton','btnRevisarFactura','titulo-columna','remove_red_eye'],
+      //Factura
+      ["Fact", 9, 'enlaces','pdf'],
+      //nº Albaranes Fran
+      ["NºAlb", 2,'lengtharray2','','titulo-columna dt-center',''],
+      //Estado
+      //[cabezeraFacturaSolicitar[10], 10,'estado',"",'titulo-columna',""],
+      //NExpediente
+      [cabezeraFacturaSolicitar[3], 3,'','','titulo-columna dt-center',''],
+      //Nfactura
+      [cabezeraFacturaSolicitar[1], 1,'copiarTexto','','titulo-columna dt-center',''],
+      //FFactura
+      [cabezeraFacturaSolicitar[4], 4,'date3','','titulo-columna dt-center',''],
+      //Datos proveedor
+      [cabezeraFacturaSolicitar[16], 16,'objeto','','titulo-columna dt-center',''],
+      //Cuantia
+      [cabezeraFacturaSolicitar[7], 7,'','','titulo-columna dt-center',''],
+      //Usuario firmante
+      [cabezeraFacturaSolicitar[6], 6,'correo','','titulo-columna dt-center',''],
+      //Usuario solicitanters
+      [cabezeraFacturaSolicitar[5], 5,'correo','','titulo-columna dt-center',''],
+      //Marca temporal solicitud
+      [cabezeraFacturaSolicitar[0], 0, 'date4','','titulo-columna dt-center',''],
+      //Observaciones
+      [cabezeraFacturaSolicitar[8], 8,'','','titulo-columna dt-center',''],
+      //UC
+      [cabezeraFacturaSolicitar[18], 18,'','','titulo-columna dt-center',''],
+    //  ['Contador', 0,'','titulo-columna'],
+      //Id factura
+      [cabezeraFacturaSolicitar[2], 2,'','','titulo-columna dt-center',''],
+    ];
+    return datosColumnasFacturasSolicitar
+  }
+  function obtenerArrayFacturasFirma(cabezeraFacturaSolicitar){
+    const datosColumnasSage = [
+      //Revisar
+      //[titulo, indice, tipo,idBtn,nombreClase,icono]
+      ['', 0, 'boton2','btnContabilizar','titulo-columna','remove_red_eye'],
+      //Factura
+      ["Fact_fir", 12, 'botonesPDFirmando','pdf'],
+      //nº Albaranes Fran
+      ["NºAlb", 13,'lengtharray','','titulo-columna dt-center',''],
+      //Estado
+      [cabezeraFacturaSolicitar[10], 10,'estado','titulo-columna'],
+      //NExpediente
+      [cabezeraFacturaSolicitar[3], 3,'buscadorClick','','titulo-columna dt-center',''],
+      //Nfactura
+      [cabezeraFacturaSolicitar[1], 1,'copiarTexto','','titulo-columna dt-center',''],
+      //FFactura
+      [cabezeraFacturaSolicitar[4], 4,'date3','','titulo-columna dt-center',''],
+      //Marca temporal solicitud
+      ["Fecha Solicitud", 0, 'date3','','titulo-columna dt-center',''],
+      //Datos proveedor
+      [cabezeraFacturaSolicitar[16], 16,'objeto','','titulo-columna dt-center',''],
+      //Cuantia
+      [cabezeraFacturaSolicitar[7], 7,'','','titulo-columna dt-center',''],
+      //Usuario firmante
+      [cabezeraFacturaSolicitar[6], 6,'correoBuscarTabla','','titulo-columna dt-center',''],
+      //Usuario solicitanters
+      [cabezeraFacturaSolicitar[5], 5,'correoBuscarTabla','','titulo-columna dt-center',''],
+      //Inversion
+      ["¿Es inversion?", 45,'','','titulo-columna dt-center',''],
+      //Observaciones
+      ["Obs.Solicitante", 8,'','','titulo-columna dt-center',''],
+      //Motivo rechazo
+      [cabezeraFacturaSolicitar[17], 17,'','','titulo-columna dt-center',''],
+    ];
+    return datosColumnasSage
+  }
+
+    function generarColumnas(datos,tabla) {
+    return datos.map(([titulo, indice, tipo,idBtn,nombreClase,icono]) => {
+      let configuracionColumna = {
+        title: titulo,
+        data: [indice],
+        className: nombreClase, // Aplica la clase CSS 'titulo-columna'
+      };
+      if (tipo === 'date') {
+        configuracionColumna.type = 'date';
+        configuracionColumna.render = function (data, type, row) {
+          return data ? moment(data).format('YY/MM/DD HH:mm:ss') : '';
+        };
+      } else if (tipo === 'date2') {
+        configuracionColumna.type = 'date';
+        configuracionColumna.render = function (data, type, row) {
+          return data ? moment(data).format('DD/MM/YY') : '';
+        };
+      } else if (tipo === 'date3') {
+        configuracionColumna.type = 'date';
+        configuracionColumna.render = function (data, type, row) {
+          return data ? moment(data).format('YYYY-MM-DD') : '';
+        };
+      } else if (tipo === 'date4') {
+        configuracionColumna.type = 'date';
+        configuracionColumna.render = function (data, type, row) {
+          return data ? moment(data).format('YYYY-MM-DD HH:mm:ss') : '';
+        };
+      }else if (tipo === 'lengtharray') {
+        configuracionColumna.render = function (data, type, row) {
+          var numeroarray = obtenerLongitudArrayParaNumAlbaranes(data)
+          return numeroarray;
+        };
+      }else if (tipo === 'lengtharray2') {
+
+        configuracionColumna.render = function (data, type, row) {
+            var numalbaranes=0;
+            for (var e = 0; e < albaranes.length; e++) {
+              if(albaranes[e][6] == data){
+                numalbaranes++;
+              }
+            }     
+          return numalbaranes;
+        };
+      }else if (tipo === 'enlaces') {
+        configuracionColumna.render = function (data, type, row) {
+          var enlaces = [data]
+          var enlacesR = '';
+          for (var i = 0; i < enlaces.length; i++) {
+            enlacesR += '<a class="enviarCorreo" href="' + enlaces[i] + '" target="_blank"><i class="Small material-icons btnPdf">picture_as_pdf</i></a>';
+          }
+          return enlacesR;
+        };
+      }else if (tipo === 'copiarTexto') {
+        configuracionColumna.render = function (data, type, row) {
+   
+            var text = '<a onclick="copiarTexto(\''+data+'\')" style="cursor: pointer; color: #434141;">' + data + '</a>';
+          
+          return text;
+        };
+      }else if (tipo === 'buscadorClick') {
+        configuracionColumna.render = function (data, type, row) {
+           var stringEnviar = data + " - " + tabla
+   
+            var text = '<a onclick="buscadorBotonTabla(\''+stringEnviar+'\')" style="cursor: pointer; color: #434141;">' + data + '</a>';
+          
+          return text;
+        };
+      }else if (tipo === 'boton') {
+        configuracionColumna.render = function (data, type, row) {
+          var html = '<a type="button" id="btnRevisarFactura" data-row="' + row[1] + '" class="seleccionar-fila tooltipped" data-tooltip="Revisar factura \'' + row[1] + '\'."><i class="material-icons">remove_red_eye</i></a>';
+          html += '<a type="button" id="btnInfoProveedorS" data-row="' + row[1] + '" class="seleccionar-fila tooltipped" data-tooltip="Datos proveedor."><i class="material-icons">assignment_ind</i></a>'
+          return html;
+          // var html = '<a type="button" id="' + idBtn + '" data-row="' + row[1] + '" class="seleccionar-fila tooltipped" data-tooltip="Revisar factura \'' + row[1] + '\'."><i class="material-icons">' + icono + '</i></a>';
+          // return html;
+        };
+      }else if (tipo === 'botonesPDFirmando') {
+        configuracionColumna.render = function (data, type, row) {
+        var enlaces = [data]
+        var arrayEnlaces = enlaces.map(enlace => {
+            // Intenta dividir el enlace por " - "
+            var splittedEnlace = enlace.split(" - ");
+
+            // Si se puede dividir y hay más de un enlace, devolver ambos enlaces, de lo contrario, solo el primer enlace
+            return splittedEnlace.length > 1 ? splittedEnlace : [enlace];
+        });
+
+        var enlacesR = '<div style="display: flex;flex-direction: row;flex-wrap: nowrap;align-items: center;gap: 5px;">';
+        enlacesR += '<a class="enviarCorreo" href="' + arrayEnlaces[0][0] + '" target="_blank"><i class="Small material-icons btnPdf">picture_as_pdf</i></a>';
+
+        // Si hay un segundo enlace, añadirlo también
+        if (arrayEnlaces[0].length > 1) {
+            enlacesR += '<a class="enviarCorreo" href="' + arrayEnlaces[0][1] + '" target="_blank"><i class="Small material-icons btnPdf2">picture_as_pdf</i></a>';
+        }
+
+        enlacesR += '</div>';
+        return enlacesR;
+        };
+        }else if (tipo === 'objeto') {
+          configuracionColumna.render = function (data, type, row) {
+            let objetoProveedor;
+            try {
+              objetoProveedor = JSON.parse(data);
+            } catch(e) {
+              // Si no es JSON, devolvemos un objeto vacío para no romper la tabla
+              objetoProveedor = {};
+            }
+            
+            const longitud = Object.keys(objetoProveedor).length;
+            let resultado;
+            if(longitud === 2){
+              resultado = 'Sin datos';
+            } else {
+              resultado = objetoProveedor.razon || 'Sin datos';
+            }
+            return resultado;
+          };
+        }else if (tipo === 'boton2') {
+        configuracionColumna.render = function (data, type, row) {
+          var html = '<a type="button" id="btnContabilizar" data-row="' + row[1] + '" class="seleccionar-fila tooltipped" data-tooltip="Revisar factura \'' + row[1] + '\'."><i class="material-icons">remove_red_eye</i></a>';
+          //html += '<a type="button" id="btnInfoProveedorF" data-row="' + row[1] + '" class="seleccionar-fila tooltipped" data-tooltip="Datos proveedor."><i class="material-icons">assignment_ind</i></a>'
+          return html;
+        };
+      }else if (tipo === 'correo') {
+        configuracionColumna.render = function (data, type, row) {
+         var usuario =obtenerNombreUsuario(data)
+          return usuario;
+        };
+      }else if (tipo === 'correoBuscarTabla') {
+        configuracionColumna.render = function (data, type, row) {
+        var usuario =obtenerNombreUsuario(data)
+        var stringEnviar = usuario + " - " + tabla
+   
+        var text = '<a onclick="buscadorBotonTabla(\''+stringEnviar+'\')" style="cursor: pointer; color: #434141;">' + usuario + '</a>';
+          
+          return text;
+        };
+      }else if (tipo === 'estado') {
+        configuracionColumna.render = function (data, type, row) {
+          var claseString=''
+          switch (data) {
+            case "Pendiente de revisión":
+            claseString='btnEstadoPendienteRevision'              
+            break;
+            case "Firmado":
+            claseString='btnEstadoFirmado'              
+            break;
+            case "C.Mano":
+            claseString='btnEstadoContabilizadoAMano'              
+              break;
+            case "Contabilizada":
+            claseString='btnEstadoContabilizada'              
+              break;
+            case "Pendiente de pago":
+            claseString='btnEstadoPendientedepago'              
+              break;
+            case "Pagada":
+            claseString='btnEstadoPagada'              
+              break;
+            case "Rechazado":
+            claseString='btnEstadoRechazado'              
+              break;
+            default:
+              // Manejar caso por defecto o valores no previstos
+          }
+          var stringEnviar = data + " - " + tabla
+          var html = '<div class="'+claseString+'" id="estado" style="cursor: pointer;" onclick="buscadorBotonTabla(\''+stringEnviar+'\')"  >'+data+'</div>';
+              return html;
+        };
+      }
+      return configuracionColumna;
+    });
+  }
+
+  function buscadorBotonTabla(stringEnviarRecibido) {
+    var arrayTextoTabla = stringEnviarRecibido.split(" - ");
+    var textoBoton = arrayTextoTabla[0];
+    var tablaBoton = arrayTextoTabla[1];
+
+    // Obtén la referencia al filtro utilizando el ID proporcionado:
+    var filtro = document.getElementById(tablaBoton + "_filter").getElementsByTagName("input")[0];
+
+    // Establece el valor de búsqueda en el filtro:
+    filtro.value = textoBoton;
+
+    // Dispara un evento "input" para que el DataTable actualice los resultados:
+    var eventoInput = new Event("input", { bubbles: true });
+    filtro.dispatchEvent(eventoInput);
+
+    var miTablaColocar = document.getElementById(tablaBoton);
+    if (miTablaColocar && $.fn.DataTable.isDataTable(miTablaColocar)) {
+    // Accede al DataTable de la tabla y busca en la columna "Estado":
+    var dataTableColocar = $(miTablaColocar).DataTable();
+     dataTableColocar.columns.adjust().draw("page");
+    }
+}
+</script>
+<!--------------------------------ACTUALIZAR TABLA-------------------------------------------------->
+<script>
+  function actualizarTabla(idTabla,datos,encabezado,columnas,arraycolumnasFechas){
+    // Verifica si el DataTable ya existe y lo destruye si es así. 
+    if ($.fn.DataTable.isDataTable(idTabla)) {
+      $(idTabla).DataTable().destroy();
+      generarTabla(idTabla,datos,encabezado,columnas,arraycolumnasFechas);
+    } else {
+      generarTabla(idTabla,datos,encabezado,columnas,arraycolumnasFechas);
+    }
+  }
+</script>
+<!---------------------------------GENERAR TABLA--------------------------------------------------->
+<script>
+  function generarTabla(idTabla, datos, encabezado, columnas, arraycolumnasFechas) {
+    console.log("=== INICIO generarTabla ===");
+    console.log("idTabla:", idTabla);
+    console.log("datos:", datos);
+    console.log("encabezado:", encabezado);
+    console.log("columnas:", columnas);
+    console.log("arraycolumnasFechas:", arraycolumnasFechas);
+
+    var idSin = idTabla.slice(1);
+    console.log("idSin:", idSin);
+
+    // Define el formato de fecha para DataTables
+    $.fn.dataTable.moment('YYYY-MM-DD');
+
+    // Crea la tabla utilizando DataTables
+    var tabla = $(idTabla).DataTable({
+      responsive: true,
+      autoWidth: true,
+      headerCallback: function(thead, data, start, end, display) {
+        //console.log("headerCallback ejecutado");
+        $(thead).attr('id', 'miEncabezado'); // Agrega el id 'miEncabezado' al encabezado
+      },
+      fixedHeader: false,
+      language: idiomaEspanol,
+      dom: 'Blfrtip',
+      data: datos,
+      columns: columnas,
+      buttons: [
+        {
+          extend: 'searchBuilder',
+          config: {
+            depthLimit: 2,
+            datetime: {
+              dateColumn: 'fechaProximoPreventivo',
+              format: 'YYYY-MM-DD'
+            }
+          },
+          attr: {
+            id: idSin+'btnBusquedaAvanzada1',
+            class:'btnTabla'
+          }
+        },
+        {
+          extend: 'copy',
+          text: 'Copy',
+          attr: { id: idSin+'btnCopy', class:'btnTabla' }
+        },
+        {
+          extend: 'csv',
+          text: 'CSV',
+          attr: { id: idSin+'btnCSV', class:'btnTabla' }
+        },
+        {
+          extend: 'excel',
+          text: 'Excel',
+          attr: { id: idSin+'btnExcel', class:'btnTabla' }
+        },
+        {
+          extend: 'pdf',
+          text: 'PDF',
+          attr: { id: idSin+'btnPDF', class:'btnTabla' }
+        },
+        {
+          extend: 'print',
+          text: 'Print',
+          attr: { id: idSin+'btnPrint', class:'btnTabla' }
+        }
+      ],
+      columnDefs: [
+        { className: 'dt-center', targets: '_all' },
+        { type: 'date', targets: arraycolumnasFechas }
+      ],
+      initComplete: function () {
+        console.log("initComplete ejecutado");
+
+        $(idTabla + '_length, ' + idTabla + '_filter, ' + idTabla + 'btnBusquedaAvanzada1, ' + idTabla + 'btnPrint, ' + idTabla + 'btnPDF, ' + idTabla + 'btnExcel, ' + idTabla + 'btnCSV, ' + idTabla + 'btnCopy')
+          .wrapAll('<div id="buscador" class="buscadorOcultar"></div>');
+        console.log("Botones y filtros envueltos en div 'buscador'");
+      },
+    });
+
+    console.log("Tabla creada con DataTables");
+
+    // Escuchadores de eventos
+    tabla.on('page.dt', function() {
+      //console.log("ENTRA EN ESCUCHADOR page");
+      var tablaExistente = tabla.table();
+      if (tablaExistente) {
+        tablaExistente.columns.adjust().draw("page");
+        currentIndex = 0;
+        console.log("Tabla ajustada en cambio de página");
+      }
+    });
+
+    tabla.on('search.dt', function() {
+      //console.log("ENTRA EN ESCUCHADOR search");
+      var tablaExistente = tabla.table();
+      var numResultados = tablaExistente.rows({ search: 'applied' }).count();
+      //console.log("Número de resultados filtrados:", numResultados);
+      if (numResultados > 0) {
+        tablaExistente.columns.adjust().draw("page");
+        currentIndex = 0;
+        //console.log("Tabla ajustada después de búsqueda");
+      }
+    });
+
+    tabla.on('length.dt', function() {
+      //console.log("ENTRA EN ESCUCHADOR length");
+      var tablaExistente = tabla.table();
+      if (tablaExistente) {
+        tablaExistente.columns.adjust().draw("page");
+        console.log("Tabla ajustada por cambio de longitud de página");
+      }
+    });
+
+    // Añadir el tooltip al encabezado específico
+    $(idTabla + ' th.titulo-columna').filter(function() {
+      return $(this).text().trim() === 'euros_SIN_IVA';
+    }).on('mouseover', function() {
+      var tooltipText = obtenerCantidadPrecioSumaDesdeTabla();
+      console.log("Tooltip actualizado con:", tooltipText);
+      $(this).attr('title', tooltipText);
+    });
+
+    var elemsTooltipped = document.querySelectorAll('.tooltipped');
+    var instances = M.Tooltip.init(elemsTooltipped);
+    console.log("Tooltips inicializados:", instances);
+
+    console.log("=== FIN generarTabla ===");
+  }
+
+</script>
+<!-- ---------------------------UNIDAD DE COSTE Y USUARIO FORMATO-------------------------------->
+<script>
+  function formatoInicialesTipoUsuario(iniciales){
+    switch (iniciales) {
+      case 'AD':
+        return 'U.Administrador'
+        break;
+      case 'UA':
+        return 'U.Avanzado'
+        break;
+      case 'UE':
+        return 'U.Estandar'
+        break;
+    }
+  }
+
+  function formatoTipoUsuario(iniciales) {
+  switch (iniciales) {
+    case 'AD':
+      return 'Usuario Administrador'
+    case 'UA':
+      return 'Usuario Avanzado'
+    case 'UE':
+      return 'Usuario Estandar'
+    default:
+      return 'UI'
+  }
+}
+  function obtenerNombreUnidadCoste(codigo) {
+  switch (codigo.toUpperCase()) {
+    case 'AM':
+      return 'ADMINISTRACION';
+    case 'GR':
+      return 'GRUA';
+    case 'LC':
+      return 'LLIMPIEZA COLEGIOS';
+    case 'LF':
+      return 'LIMPIEZA FACHADAS';
+    case 'LI':
+      return 'LIMPIEZA INTERIORES';
+    case 'LV':
+      return 'LIMPIEZA VIARIA';
+    case 'MA':
+      return 'MANTENIMIENTO';
+    case 'RS':
+      return 'RRSU';
+    case 'TA':
+      return 'TALLER';
+    case 'OT':
+      return 'OFICINA TÉCNICA';
+    default:
+      return 'UNIDAD DESCONOCIDA';
+  }
+}
+function formatoUnidadCoste(iniciales) {
+  switch (iniciales) {
+    case 'AM':
+      return 'Administracion';
+    case 'GR':
+      return 'Grua';
+    case 'LC':
+      return 'Llimpieza Colegios';
+    case 'LF':
+      return 'Limpieza Fachadas';
+    case 'LI':
+      return 'Limpieza Interiores';
+    case 'LV':
+      return 'Limpieza Viaria';
+    case 'MA':
+      return 'Mantenimiento';
+    case 'RS':
+      return 'RRSU';
+    case 'TA':
+      return 'Taller';
+    default:
+      return 'UI';
+  }
+}
+
+function obtenerCodigoUnidadCoste(nombre) {
+  switch (nombre) {
+    case 'ADMINISTRACION':
+      return 'AM';
+    case 'GRUA':
+      return 'GR';
+    case 'LLIMPIEZA COLEGIOS':
+      return 'LC';
+    case 'LIMPIEZA FACHADAS':
+      return 'LF';
+    case 'LIMPIEZA INTERIORES':
+      return 'LI';
+    case 'LIMPIEZA VIARIA':
+      return 'LV';
+    case 'MANTENIMIENTO':
+      return 'MA';
+    case 'RRSU':
+      return 'RS';
+    case 'TALLER':
+      return 'TA';
+    case 'INNOVACION':
+      return 'IN';
+    default:
+      return 'UNIDAD DESCONOCIDA';
+  }
+}
+</script>
+<!-- ----------------------VALIDACION FORMULARIO Y RESTABLECER-------------------------------->
+<script>
+  function habilitarCamposDeEntrada(idFormulario) {
+    // Obtener el formulario por su ID
+    var formulario = document.getElementById(idFormulario);
+
+    // Verificar si el formulario existe
+    if (formulario) {
+        // Obtener todos los elementos del formulario
+        var elementos = formulario.elements;
+
+        // Iterar sobre los elementos del formulario
+        for (var i = 0; i < elementos.length; i++) {
+            // Verificar si el elemento es un campo de entrada
+            if (elementos[i].tagName === 'INPUT' || elementos[i].tagName === 'TEXTAREA') {
+                // Habilitar el campo de entrada
+                elementos[i].disabled = false;
+            }
+        }
+    } else {
+    }
+} 
+  function obtenerValoresFormulario(idFormulario) {
+    var formulario = document.getElementById(idFormulario);
+    var elementos = formulario.elements;
+    var valores = {};
+
+    for (var i = 0; i < elementos.length; i++) {
+      var elemento = elementos[i];
+      
+      // Verificar si el elemento es un campo de entrada y tiene un nombre
+      if (elemento.type !== 'button' && elemento.type !== 'submit' && elemento.name !== '') {
+        // Obtener el valor del campo
+        valores[elemento.name] = elemento.value;
+      }
+    }
+
+    return valores;
+  }
+  // Función para restablecer la vista previa del archivo adjunto
+function resetPreview(inputId, boxId, dropZoneId, infoId) {
+  var input = document.getElementById(inputId);
+  var box = document.getElementById(boxId);
+  var dropZone = document.getElementById(dropZoneId);
+  var info = document.getElementById(infoId);
+
+  input.value = '';
+  box.innerHTML = '<div class="cssContenedorImg" id="' + dropZoneId + '"><label id="' + infoId + '"><p class="box_start">No hay archivos seleccionados ...</p></label></div>';
+
+  // Puedes personalizar esta función según tus necesidades para el manejo de archivos adjuntos
+}
+  function restablecerFormularioSolicitud(){
+    // Obtener el formulario
+    var formulario = document.getElementById('formularioGeneral');
+
+    // Restablecer el formulario al cargar la página
+    formulario.reset();
+
+    // También puedes restablecer los valores de los campos individualmente si es necesario
+    document.getElementById('nFactura').value = '';
+    document.getElementById('selectNexpediente').value = '';
+    document.getElementById('selectUsuario').value = '';
+    document.getElementById('fechaFactura').value = '';
+    document.getElementById('inporteFactura').value = '';
+    document.getElementById('idCarpeta').value = '';
+    document.getElementById('infoUsuarioInput').value = '';
+    document.getElementById('obsFactura').value = '';
+    document.getElementById('checkFirma').checked = false;
+    // Restablecer la vista previa del archivo adjunto
+    resetPreview('archivos0', 'box0', 'drop_zone0', 'infoImg0'); 
+  }
+  function validarFormulario(queryValores,queryValoresValidos,numeroValidos){
+    var valoresFormulario = document.querySelectorAll(queryValores);
+    comprobarCampos(valoresFormulario)
+    var valoresValidosFormulario = document.querySelectorAll(queryValoresValidos);
+    if(valoresValidosFormulario.length == numeroValidos ){
+      return true
+    }else{
+      return false
+    }
+  }
+
+  function reiniciarFormulario(formulario){
+    formulario.reset()
+    const contenedorHtmlCorreos = document.getElementById('correos');
+    // Eliminar todos los hijos del contenedor
+    while (contenedorHtmlCorreos.firstChild) {
+      contenedorHtmlCorreos.removeChild(contenedorHtmlCorreos.firstChild);
+    }
+  }
+
+  function reiniciarCampos(valores){
+    for(i=0;i<valores.length;i++){
+      var validacion = document.getElementById("validacion"+valores[i].id)
+      var avisoExistente = document.getElementById(valores[i].id+"Valid");
+      if (avisoExistente) {
+        validacion.removeChild(avisoExistente);
+      }
+      if(valores[i].value.length==0 ||valores[i].value==0 ){
+        valores[i].className = "campoRellenable noValido materialize-textarea";
+        validacion.classList.remove("clasevalidacion");
+        const contenedorValid = document.createElement('div');
+        contenedorValid.classList.remove("validacionRojo");
+        contenedorValid.setAttribute("id",valores[i].id+"Valid")
+        contenedorValid.innerHTML=""
+        validacion.appendChild(contenedorValid)
+      }else{
+        valores[i].className = "campoRellenable noValido materialize-textarea";
+        validacion.classList.remove("clasevalidacion");
+        const contenedorValid = document.createElement('div');
+        contenedorValid.classList.remove("validacionVerde");
+        contenedorValid.setAttribute("id",valores[i].id+"Valid")
+        contenedorValid.innerHTML=""
+        validacion.appendChild(contenedorValid)
+      }
+
+            document.getElementById(valores[i].id).value= ""
+      valores[i].value=" "
+    }
+  }
+
+    function comprobarCampos(valores){
+    for(i=0;i<valores.length;i++){
+      var validacion = document.getElementById("validacion"+valores[i].id)
+      var avisoExistente = document.getElementById(valores[i].id+"Valid");
+      if (avisoExistente) {
+        validacion.removeChild(avisoExistente);
+      }
+      if(valores[i].value.length==0 ||valores[i].value==0 ){
+        valores[i].className = "campoRellenable noValido materialize-textarea";
+        validacion.setAttribute("class","clasevalidacion")
+        const contenedorValid = document.createElement('div');
+        contenedorValid.setAttribute("class","validacionRojo")
+        contenedorValid.setAttribute("id",valores[i].id+"Valid")
+        contenedorValid.innerHTML="Revisar campo!"
+        validacion.appendChild(contenedorValid)
+      }else{
+        valores[i].className = "campoRellenable valido materialize-textarea";
+        validacion.setAttribute("class","clasevalidacion")
+        const contenedorValid = document.createElement('div');
+        contenedorValid.setAttribute("class","validacionVerde")
+        contenedorValid.setAttribute("id",valores[i].id+"Valid")
+        contenedorValid.innerHTML="Correcto!"
+        validacion.appendChild(contenedorValid)
+      }
+    }
+  }
+
+  function limpiarCampos(valores) {
+    for (i = 0; i < valores.length; i++) {
+      valores[i].className = "campoRellenable materialize-textarea";
+      var avisoExistente = document.getElementById(valores[i].id + "Valid");
+      if (avisoExistente) {
+        avisoExistente.parentNode.removeChild(avisoExistente);
+      }
+    }
+  }
+</script>
+<!----------------------------AVISOS TOAST O AVISO DINAMICO----------------------------------------------->
+<script>
+  function avisoAccion(texto,claseCss){
+    var mensaje = '<span>' + texto + '</span>';
+    M.toast({html: mensaje , classes: claseCss,inDuration:500,displayLength:5000,outDuration:500});
+  }
+    function avisoAccionRapido(texto,claseCss){
+    var mensaje = '<span>' + texto + '</span>';
+    M.toast({html: mensaje , classes: claseCss,inDuration:100,displayLength:700,outDuration:300});
+  }
+  function generarAviso(titulo,icono,cerrarClikFuera,cerrarEscape,texto){
+    swal.fire({
+      title: titulo,
+      icon: icono,
+      closeOnClickOutside: cerrarClikFuera,
+      closeOnEsc: cerrarEscape,
+      text: texto,
+    })
+  }
+</script>
+<!-------------------------------------ABRIR Y CERRAR MODAL----------------------------------------------->
+<script>
+  // function abrirModal(idModal){
+  //   var modal =document.getElementById(idModal)
+  //   // Asigna los datos del lote a la ventana modal correspondiente
+  //   var instance = M.Modal.getInstance(modal);
+  //   // Obtiene la instancia de la ventana modal correspondiente
+  //   instance.open();
+  //   // Abre la ventana modal
+  // }
+  function abrirModal(idModal){
+    var modal = document.getElementById(idModal);
+    var instance = M.Modal.getInstance(modal);
+    // Comprobar si ya existe el escuchador de eventos
+    if (idModal =="modalGeneral") {
+      instance.options.onCloseEnd = function() {
+        if (document.body.style.overflow == 'hidden') {
+          document.body.style.overflow = '';
+        }
+      };
+ 
+    }
+
+    instance.open();
+  }
+
+  function cerrarModal(idModal){
+    var modal = document.getElementById(idModal);
+    var instance = M.Modal.getInstance(modal);
+    instance.close();
+ 
+  } 
+
+</script>
+<!-----------------------------------MOSTRAR Y OCULTAR LOADER ------------------------------------>
+<script>
+  function mostrarOcultarLoaderGeneral(idLoader,idTexto,textoDeCarga,claseEliminar,claseAdd){
+    var elementoLoader= document.getElementById(idLoader)
+    var elementoTextoLoader= document.getElementById(idTexto)
+    elementoLoader.classList.remove(claseEliminar);
+    elementoLoader.classList.add(claseAdd);
+    elementoTextoLoader.textContent=textoDeCarga;
+  }
+</script>
+<!------------------------OBTENER EL USUARIO DE UN CORREO ELECTRONICO------------------------------->
+<script>
+  function obtenerNombreUsuario(correo) {
+  try {
+    var nombreUsuario = correo.split('@')[0];
+    return nombreUsuario;
+  } catch (error) {
+    return null;
+  }
+}
+</script>
+<!-------------------------------ELEMENTOS DINAMICOS----------------------------------------------------->
+<script>
+  function crearInputProducto(contenedor,idLabelInput,variable,clase){
+    contenedor.setAttribute('class', clase);
+    const labelProducto = document.createElement('label');
+    labelProducto.setAttribute('for',idLabelInput);
+    labelProducto.textContent = 'Producto';
+    const inputProducto = document.createElement('input');
+    inputProducto.setAttribute('id',idLabelInput);
+    inputProducto.setAttribute('name',idLabelInput);
+    inputProducto.setAttribute('type', 'text');
+    inputProducto.setAttribute('class', 'form-control producto');
+    inputProducto.setAttribute('list', 'datalistoptions');
+    inputProducto.miVariable = 0
+    inputProducto.setAttribute('data-mi-variable', variable);
+    const dataListProductos = document.createElement('datalist');
+    dataListProductos.setAttribute('id', 'datalistoptions');
+    contenedor.appendChild(labelProducto);
+    contenedor.appendChild(inputProducto);
+    contenedor.appendChild(dataListProductos);
+    return inputProducto
+  }
+
+  function addFacturaoObjeto (identificadores){
+    addDiv('divAlbaranInfo'+contadorInputsAlbaranes,'divInputFacturaSelect'+contadorInputsAlbaranes,'flexCCC anchoMax col s6 m6 l6')
+    var inputProducto=  addSelectDataList('divInputFacturaSelect'+contadorInputsAlbaranes,'Albaranes','selectAlbaran'+contadorInputsAlbaranes,identificadores,identificadores,'datalistoptions1',`input-field descripcion col s12 m12 l12 row`,'loadSubidaAlbaranes','load1','load2')
+    return inputProducto
+  }
+
+
+  function generarComponeneteDataListAlbaran(albaranes,arrayModificado){
+    var estructuraOriginal = JSON.parse(albaranes)
+
+    const identificadores = estructuraOriginal.map(elemento => Object.keys(elemento)[0]);
+    var datosValidos
+    var divAlbaranInfo = addDiv('informacionAlbaran2','divAlbaranInfo' + contadorInputsAlbaranes,'flexRowSpaceEvenly col s12 m12 l12')
+    
+    addDiv('divAlbaranInfo' + contadorInputsAlbaranes,'divInputFacturaSelect' + contadorInputsAlbaranes,'flexCCC anchoMax col s6 m6 l6')
+
+    var inputHtmlNalbaran
+    if(arrayModificado){
+      datosValidos = arrayModificado
+      inputHtmlNalbaran = addSelectDataList('divInputFacturaSelect' + contadorInputsAlbaranes,'Albaranes','selectAlbaran'+contadorInputsAlbaranes,datosValidos,datosValidos,'datalistoptions1',`input-field descripcion col s12 m12 l12 row`)
+    }else{
+      datosValidos = identificadores
+      inputHtmlNalbaran =  addSelectDataList('divInputFacturaSelect' + contadorInputsAlbaranes,'Albaranes','selectAlbaran'+contadorInputsAlbaranes,datosValidos,datosValidos,'datalistoptions1',`input-field descripcion col s12 m12 l12 row`)
+    }
+    inputHtmlNalbaran.miVariable = 0
+
+    /** Alvaro, en el evento blur (al pinchar fuera) aprovechamos tambien para añadir el albaran a los albaranes adjudicados  */
+    inputHtmlNalbaran.addEventListener('blur', function(event) {
+      const valorInput = event.target.value;
+      if (identificadores.includes(valorInput)) {
+        const elementoEncontrado = estructuraOriginal.find(elemento => elemento.hasOwnProperty(valorInput));
+        arrayAlbaranesAdd.push(elementoEncontrado)
+
+        // Realizar toda la acción si hay algún elemento incluido en la listaBusqueda
+        addDiv('divAlbaranInfo'+contadorInputsAlbaranes,'divDdd'+contadorInputsAlbaranes,'flexCCC anchoMax col s6 m6 l6')
+        addIcono('divDdd'+contadorInputsAlbaranes, [elementoEncontrado[valorInput].urlArchivoAlbaran],[''],"Small material-icons btnPdf","picture_as_pdf",true)
+        addIcono('divDdd'+contadorInputsAlbaranes, [''],[''],"Small material-icons  btnPdf","delete",false)
+        /** En la tabla albaranes, añadimos este albaran valorInput a la factura */
+
+
+
+        var eliminarIcon= document.getElementById('divAlbaranInfo' + contadorInputsAlbaranes)
+        eliminarIcon.addEventListener('click', function() {
+          // Eliminar el contenedor HTML
+          divAlbaranInfo.remove();
+          // // Eliminar el elemento del array si existe
+          // const index = albaranes.indexOf(valorInput);
+          // if (index !== -1) {
+          //   albaranes.splice(index, 1);
+          // }
+        });
+        if (inputHtmlNalbaran.miVariable == 0) {
+          eliminarOpcionSeleccionada(valorInput)
+
+          /**Descomentamos la variable siguiente Alvaro */
+          const arrayModificado = datosValidos.filter(elemento => elemento !== valorInput);
+
+          contadorInputsAlbaranes++;
+          generarComponeneteDataListAlbaran(albaranes,arrayModificado)
+          inputHtmlNalbaran.readOnly = true;
+          inputHtmlNalbaran.miVariable = 1
+        }
+        var stringObjeto = JSON.stringify(arrayAlbaranesAdd);
+        document.getElementById('arrayAlbaranesPorAdjuntar').value = stringObjeto
+        document.getElementById('arrayAlbaranes').value = stringObjeto
+      }
+    });
+  }
+
+  function eliminarOpcionSeleccionada(selectedOption){
+   //Eliminar la opción seleccionada del datalist
+    const datalist = document.getElementById('datalistoptions1');
+
+    //const value = selectedOption.getAttribute('value');
+    const options = datalist.getElementsByTagName('option');
+    for (let i = 0; i < options.length; i++) {
+      if (options[i].getAttribute('value') === selectedOption) {
+        options[i].remove();
+        break;
+      }
+    }   
+  }
+
+
+  function generarElementoLista(nombre, url,iconoMaterilize,variableUrl) {
+    // Crear el elemento de lista (li)
+    var listItem = document.createElement("li");
+
+    // Crear el elemento de enlace (a)
+    var link = document.createElement("a");
+    link.href = url+'?p='+variableUrl;
+
+    // Crear el icono (i)
+    var icono = document.createElement("i");
+    icono.className = "material-icons left";
+    icono.textContent = iconoMaterilize;
+
+    // Crear el texto del enlace
+    var texto = document.createTextNode(nombre);
+
+    // Agregar el icono y el texto al enlace
+    link.appendChild(icono);
+    link.appendChild(texto);
+
+    // Agregar el enlace al elemento de lista
+    listItem.appendChild(link);
+
+
+   var contenedorNav= document.getElementById('nav-mobile')
+   contenedorNav.appendChild(listItem)
+
+    return listItem;
+  }
+  //?????????????????????????
+    function confirmacionFirmarFactura2(formulario){
+    mostrarOcultarLoaderGeneral('cargaEnvioGeneral','textoCargaGeneral',"Firmando factura.",'ocultarImportant','carga')
+    google.script.run
+    .withSuccessHandler(function (value) { 
+      generarAviso('¡Factura firmada!','success',false,false,'')
+      mostrarOcultarLoaderGeneral('cargaEnvioGeneral','textoCargaGeneral',"",'carga','ocultarImportant')
+      cerrarModal('modalGeneral')
+      document.body.style.overflow = 'scroll';
+      google.script.run
+      .withSuccessHandler(function (value) {
+        actualizarTablasFacturas(value)
+      }).obtenerDatosTablaBQ(datosFirma1, true); 
+    }).firmaFactura(formulario);  
+  }
+
+
+
+
+   function generarElementoCarga(idContenedorPadre,idContenedor, textoCarga) {
+    var contenedorPadre=document.getElementById(idContenedorPadre)
+    // Crear el contenedor principal
+    var contenedorLoad = document.createElement("div");
+    contenedorLoad.id = idContenedor;
+    contenedorLoad.className = "load";
+
+    // Crear el elemento de texto
+    var textoCargaElemento = document.createElement("h4");
+    textoCargaElemento.id = "textoCarga" + idContenedor;
+    textoCargaElemento.textContent = textoCarga;
+    textoCargaElemento.className = 'negrita';
+    // Crear el contenedor del spinner
+    var loadingSpinner = document.createElement("div");
+    loadingSpinner.className = "loadingspinner";
+
+    // Crear los cuadrados del spinner
+    for (var i = 1; i <= 5; i++) {
+        var square = document.createElement("div");
+        square.id = "square" + i;
+        loadingSpinner.appendChild(square);
+    }
+
+    // Agregar los elementos al contenedor principal
+    contenedorLoad.appendChild(textoCargaElemento);
+    contenedorLoad.appendChild(loadingSpinner);
+
+    // Agregar el contenedor principal al cuerpo del documento
+    contenedorPadre.appendChild(contenedorLoad);
+}
+
+// Llamar a la función para generar el elemento de carga
+  // Mostrar el elemento superpuesto
+  function mostrarElementoSuperpuesto() {
+      var elementoSuperpuesto = document.getElementById('elementoSuperpuesto');
+
+    elementoSuperpuesto.style.display = 'block';
+  }
+
+  // Ocultar el elemento superpuesto
+  function ocultarElementoSuperpuesto() {
+      var elementoSuperpuesto = document.getElementById('elementoSuperpuesto');
+
+    elementoSuperpuesto.style.display = 'none';
+  }
+
+    function mostrarOcultarElemento(id1,id2,id3){
+    document.getElementById(id1).classList.add('ocultar')
+    document.getElementById(id2).classList.remove('ocultar')
+    document.getElementById(id3).classList.remove('ocultar')
+  }
+    function addIframe(idContenedor,url){
+    // Obtener el contenedor donde se colocará el iframe
+    var iframeContainer = document.getElementById(idContenedor);
+    // Crear el elemento iframe
+    var iframe = document.createElement('iframe');
+    iframe.src = url;
+    iframe.width = 600;
+    iframe.height = 400;
+    // Agregar el iframe al contenedor
+    iframeContainer.appendChild(iframe);        
+  }
+
+function addFrame(contenedor, array, titulo, longitud, idIframe, clase) {
+
+  console.log("🔍 Ejecutando addFrame...");
+  console.log("➡ contenedor:", contenedor);
+  console.log("➡ array:", array);
+  console.log("➡ titulo:", titulo);
+  console.log("➡ longitud:", longitud);
+  console.log("➡ idIframe:", idIframe);
+  console.log("➡ clase:", clase);
+
+  array.forEach(function (enlace, index) {
+
+    console.log("--------------------------------------------------");
+    console.log("📌 Procesando índice:", index);
+    console.log("📌 Enlace recibido:", enlace);
+
+    let fileId = null;
+
+    try {
+      if (!enlace) {
+        console.warn("⚠ Enlace nulo o vacío en índice", index);
+        return; // saltar este elemento
+      }
+      const match = enlace.match(/\/d\/(.+?)\//);
+      console.log("🔎 Resultado regex:", match);
+
+      if (!match) {
+        console.error("❌ No se pudo extraer fileId del enlace:", enlace);
+      } else {
+        fileId = match[1];
+      }
+
+    } catch (e) {
+      console.error("❌ Error extrayendo fileId:", e);
+    }
+
+    console.log("➡ fileId:", fileId);
+
+    // Obtener nombre (por si se necesita)
+    const fileName = enlace.substring(enlace.lastIndexOf('/') + 1);
+    console.log("➡ fileName:", fileName);
+
+    // Calcular número interno
+    let numero;
+    if (longitud === 1) {
+      numero = null;
+    } else {
+      numero = index + 1;
+    }
+    console.log("➡ numero:", numero);
+
+    // Crear iframe
+    const iframe = document.createElement('iframe');
+    console.log("🧱 iframe creado:", iframe);
+
+    if (fileId) {
+      iframe.src = "https://drive.google.com/file/d/" + fileId + "/preview";
+    } else {
+      console.warn("⚠ iframe sin src porque fileId es null");
+    }
+
+    iframe.width = "1500";
+    iframe.height = "1200";
+
+    iframe.id = idIframe;
+    iframe.classList.add(clase);
+
+    console.log("📤 Insertando iframe en contenedor...");
+    contenedor.append(iframe);
+
+  });
+
+  console.log("✅ addFrame finalizado.");
+}
+
+
+
+  function addFrame1(contenedor, array,titulo,longitud) {
+
+    array.forEach(function (enlace ,index) {
+        var albaran =JSON.parse(enlace)
+        var url =albaran.urlArchivoAlbaran
+        // Extraer el identificador único del archivo en Google Drive
+        var fileId = url.match(/\/d\/(.+?)\//)[1];
+        // Obtener el nombre del archivo desde el enlace (puedes ajustar esto según la estructura de tus enlaces)
+        var fileName = url.substring(url.lastIndexOf('/') + 1);
+        if(longitud==1){
+        }else{
+          var numero =index+1
+        }
+        // Crear el código HTML del iframe
+        var iframeHtml = '<iframe src="https://drive.google.com/file/d/' + fileId + '/preview" width="1500" height="1200"></iframe>';
+        // Agregar el título y el iframe al contenedor
+        contenedor.append(iframeHtml);
+    });
+}
+
+    function generarElementoDinamico(idContenedor,idTitulo ,textoLabel,textoTitulo,) {
+    var contenedor =document.getElementById(idContenedor)
+    // Crear el elemento div
+    var divElement = document.createElement('div');
+    divElement.className = 'entrada center';
+
+    // Crear el elemento label
+    var labelElement = document.createElement('label');
+    labelElement.textContent = textoLabel;
+
+    // Crear el elemento h6
+    var h6Element = document.createElement('h6');
+    h6Element.id = idTitulo;
+    h6Element.textContent = textoTitulo;
+
+    // Agregar los elementos al div
+    divElement.appendChild(labelElement);
+    divElement.appendChild(h6Element);
+
+    // Agregar el div al documento (en el lugar que desees)
+    contenedor.appendChild(divElement);
+  }
+  function generarIconoMaterial(idContenedor) {
+      var contenedor =document.getElementById(idContenedor)
+
+    // Crear el elemento <i>
+    var iconoElement = document.createElement('i');
+    iconoElement.className = 'colorBeis material-icons tooltipped';
+    iconoElement.setAttribute('data-position', 'top');
+    iconoElement.setAttribute('data-tooltip', 'Información adicional');
+    iconoElement.textContent = 'info'; // Agregar el texto 'info' dentro del elemento <i>
+
+    // Agregar el elemento al documento (en el lugar que desees)
+    contenedor.appendChild(iconoElement);
+  }
+
+  
+  function lineSeparadora(contenedor){
+    var contenedor= document.getElementById(contenedor)
+    // Crear el elemento <hr>
+    var hrElement = document.createElement('hr');
+    // Establecer las propiedades directamente
+    hrElement.setAttribute('class', 'separador');
+    // Agregar el elemento al DOM
+    contenedor.appendChild(hrElement);  
+  }
+
+
+    function generarSwitch(idContenedor,idInput,texto,textoTooltip,clase) {
+        // Crear el elemento div
+        var divSwitch = document.createElement("div");
+        divSwitch.className = "switch contenedorSwitch center";
+        divSwitch.style.display = "block";
+
+        // Crear el elemento label
+        var labelSwitch = document.createElement("label");
+        labelSwitch.setAttribute("class",clase);
+        var labelSwitch1 = document.createElement("label");
+        labelSwitch1.appendChild(document.createTextNode(texto));
+
+        // Crear el elemento i (icono)
+        var iconElement = document.createElement("i");
+        iconElement.className = "material-icons tooltipped";
+        iconElement.setAttribute("data-position", "bottom");
+        iconElement.setAttribute("data-tooltip", textoTooltip);
+        iconElement.textContent = "attach_file";
+
+        // Crear el elemento input (checkbox)
+        var checkboxElement = document.createElement("input");
+        checkboxElement.type = "checkbox";
+        checkboxElement.id = idInput;
+        checkboxElement.name = idInput;
+
+        // Crear el elemento span (lever)
+        var spanElement = document.createElement("span");
+        spanElement.className = "lever";
+
+        // Agregar los elementos al árbol DOM
+        labelSwitch.appendChild(iconElement);
+        labelSwitch.appendChild(labelSwitch1);
+        labelSwitch.appendChild(checkboxElement);
+        labelSwitch.appendChild(spanElement);
+
+        divSwitch.appendChild(labelSwitch);
+
+        // Agregar el nuevo elemento al contenedor principal
+        var contenedorPrincipal = document.getElementById(idContenedor);
+        contenedorPrincipal.appendChild(divSwitch);
+        var elems = document.querySelectorAll('.tooltipped');
+        var instances = M.Tooltip.init(elems);
+        return checkboxElement
+    }
+
+
+
+  function addModal(idModal,idEncabezado,idTituloEncabezado,tituloEncabezado,textoTooltips,idContendioGeneral,idContenedorBotones){
+  // Crear el elemento div
+  var modalDiv = document.createElement("div");
+  modalDiv.setAttribute('id', idModal);
+  modalDiv.setAttribute('class', 'modal modal-fixed-footer');
+
+
+  // Crear el encabezado modal
+  var encabezadoModalDiv = document.createElement("div");
+  encabezadoModalDiv.setAttribute('id', idEncabezado);
+  encabezadoModalDiv.setAttribute('class', 'encabezadoModal');
+
+  var flexRowDiv = document.createElement("div");
+    flexRowDiv.setAttribute('class', 'flexRow');
+
+  var encabezadoH6 = document.createElement("h6");
+  encabezadoH6.setAttribute('id', idTituloEncabezado);
+  encabezadoH6.setAttribute('class', 'tituloModalCentro');
+  encabezadoH6.innerText = tituloEncabezado;
+
+  var infoIcon = document.createElement("i");
+  infoIcon.setAttribute('class', 'material-icons tooltipped ');
+  infoIcon.setAttribute("data-position", "top");
+  infoIcon.setAttribute("data-tooltip", textoTooltips);
+  infoIcon.innerText = "info";
+  flexRowDiv.appendChild(encabezadoH6);
+  flexRowDiv.appendChild(infoIcon);
+  encabezadoModalDiv.appendChild(flexRowDiv);
+
+  // Crear el contenido modal
+  var contenidoModalDiv = document.createElement("div");
+  contenidoModalDiv.className = "modal-content";
+  var contenidoGeneralDiv = document.createElement("div");
+  contenidoGeneralDiv.id = idContendioGeneral;
+  contenidoGeneralDiv.className = "flexCCC anchoMax";
+  contenidoModalDiv.appendChild(contenidoGeneralDiv);
+
+  // Crear el footer modal
+  var footerModalDiv = document.createElement("div");
+  footerModalDiv.className = "modal-footer flexRCC";
+  footerModalDiv.id = idContenedorBotones;
+  // Agregar todos los elementos al modalDiv
+  modalDiv.appendChild(encabezadoModalDiv);
+  modalDiv.appendChild(contenidoModalDiv);
+  contenidoModalDiv.appendChild(footerModalDiv);
+  //modalDiv.appendChild(footerModalDiv);
+
+  // Agregar el modalDiv al documento
+  document.body.appendChild(modalDiv);
+
+  var elems = document.querySelectorAll('.modal');
+  var instances = M.Modal.init(elems);
+
+  // var instances = M.Modal.init(elems, {
+  //   onCloseEnd: function() {
+  //     console.log("SE CIERRA MODAL")
+  //     document.body.style.overflow = '';
+  //   }
+  // });
+
+  }
+
+
+  function addLoader(contenedor,idCarga,idTexto){
+    var contenedorAdd =document.getElementById(contenedor)
+  // Crear el elemento de carga
+  var cargaEnvioDiv = document.createElement("div");
+  cargaEnvioDiv.id = idCarga;
+  cargaEnvioDiv.className = "carga ocultarImportant";
+  var loaderPrincipalDiv = document.createElement("div");
+  loaderPrincipalDiv.className = "loaderPrincipal";
+  // ... (añade los elementos internos del loaderPrincipalDiv, similar a tu HTML)
+  var textoCargaGeneralP = document.createElement("p");
+  textoCargaGeneralP.id = idTexto;
+  textoCargaGeneralP.className = "infoCarga";
+  textoCargaGeneralP.innerText = "Realizando pedido...";
+
+    cargaEnvioDiv.appendChild(loaderPrincipalDiv);
+  cargaEnvioDiv.appendChild(textoCargaGeneralP);
+  contenedorAdd.appendChild(cargaEnvioDiv);
+
+  }
+  function addSeleccionar(idContenedor,texto,idElemento){
+    const contenedor = document.getElementById(idContenedor);
+    // Crear el elemento label
+    var labelElement = document.createElement('label');
+    labelElement.setAttribute("class", "textoSwitch");
+    // Crear el texto dentro del label
+    labelElement.appendChild(document.createTextNode(texto));
+
+    // Crear el elemento input (checkbox)
+    var checkboxElement = document.createElement('input');
+    checkboxElement.type = 'checkbox';
+    checkboxElement.id = idElemento;
+
+    // Crear el elemento span con la clase "lever"
+    var spanElement = document.createElement('span');
+    spanElement.className = 'lever';
+
+    // Agregar los elementos al label
+    labelElement.appendChild(checkboxElement);
+    labelElement.appendChild(spanElement);
+    contenedor.appendChild(labelElement)
+
+    return checkboxElement
+  }
+
+  function crearbtn(datos,conjuntoAlbaranesAsignados){
+    var btnVerAlbaranesAdjuntos= addBoton('divTituloFactura','btnVerAlbaranes','waves-effect waves-light btn btn1 col s12 m12 l12 input-field',"",'Ver albaranes adjuntos',false,'Ver todos los albaranes adjuntos a la factura','bottom')
+    btnVerAlbaranesAdjuntos.onclick = function() {
+    // Aquí puedes colocar el código que quieres que se ejecute cuando se haga clic en el botón
+      if(conjuntoAlbaranesAsignados.length>0){
+        abrirDocumentacion(conjuntoAlbaranesAsignados,datos)
+      } else {
+      generarAviso('¡Selecciona mínimo un albarán!','error',false,false,'Para visualizar todos los albaranes, debemos seleccionar mínimo uno')
+      }
+    };
+  }
+
+
+
+  
+  function addIcono(contenedor, archivos,titulos,clase,tipoIcono,link) {
+    var divArchivosMostrar = document.getElementById(contenedor);
+    archivos.forEach(function (archivo,index) {
+      var contenedorArchivo = document.createElement("div");
+      contenedorArchivo.className = "flexColumnaAuto";
+
+      var tituloElemento = document.createElement("label");
+      tituloElemento.innerHTML = titulos[index];
+
+      var iconElement = document.createElement("i");
+
+      iconElement.textContent = tipoIcono;
+      iconElement.className = clase;
+
+
+
+
+      contenedorArchivo.appendChild(tituloElemento);
+      if(link){
+      // Crear un enlace <a> para abrir la URL en una nueva ventana
+      var linkElement = document.createElement("a");
+      linkElement.href = archivo;
+      linkElement.target = "_blank"; // Abre en una nueva ventana
+      linkElement.appendChild(iconElement);
+      contenedorArchivo.appendChild(linkElement);
+      }else{
+      contenedorArchivo.appendChild(iconElement);
+      }
+      divArchivosMostrar.appendChild(contenedorArchivo);
+      return iconElement
+
+    });
+
+}
+  function addIconoID(contenedor, archivos,titulos,clase,tipoIcono,link,id) {
+    var divArchivosMostrar = document.getElementById(contenedor);
+    archivos.forEach(function (archivo,index) {
+      var contenedorArchivo = document.createElement("div");
+      contenedorArchivo.className = "flexColumnaAuto";
+
+      var tituloElemento = document.createElement("label");
+      tituloElemento.innerHTML = titulos[index];
+
+      var iconElement = document.createElement("i");
+
+      iconElement.textContent = tipoIcono;
+      iconElement.className = clase;
+      iconElement.id = id;
+      contenedorArchivo.appendChild(tituloElemento);
+      if(link){
+      // Crear un enlace <a> para abrir la URL en una nueva ventana
+      var linkElement = document.createElement("a");
+      linkElement.href = archivo;
+      linkElement.target = "_blank"; // Abre en una nueva ventana
+      linkElement.appendChild(iconElement);
+      contenedorArchivo.appendChild(linkElement);
+      }else{
+      contenedorArchivo.appendChild(iconElement);
+      }
+      divArchivosMostrar.appendChild(contenedorArchivo);
+      return iconElement
+
+    });
+
+}
+
+function generarEnlacesGoogleDrive(fileIds, fileType) {
+    // Convertir la cadena de IDs en un array
+    var idsArray = fileIds.split(',');
+
+    var enlaces = [];
+
+    // Verificar el tipo de archivo y construir enlaces para cada ID
+    if (fileType === 'doc') {
+        enlaces = idsArray.map(function (id) {
+            return 'https://docs.google.com/document/d/' + id.trim() + '/edit';
+        });
+    } else if (fileType === 'pdf') {
+        enlaces = idsArray.map(function (id) {
+            return 'https://drive.google.com/file/d/' + id.trim() + '/view?usp=drivesdk';
+        });
+    } else {
+        // Tipo de archivo no reconocido
+        return null;
+    }
+
+    return enlaces;
+}
+
+  function addCarrusel(idContenedor){
+    var divSeccionTodasLasFacturas1 = document.createElement('div');
+    var divSeccionTodasLasFacturas2 = document.createElement('div');
+    var label = document.createElement('label');
+
+
+
+    var contenedor = document.getElementById(idContenedor)
+    // Contenedor principal
+    var carouselContainer = document.createElement('div');
+    carouselContainer.id = 'carousel-container';
+    carouselContainer.classList.add('modalMax')
+    carouselContainer.classList.add('flexCCC')
+ 
+    // Contenedor del iframe
+    var iframeContainer = document.createElement('div');
+    iframeContainer.id = 'iframe-container';
+    iframeContainer.classList.add('flexRow');
+
+    // Botón de anterior
+    var prevButton = document.createElement('div');
+    prevButton.id = 'prev';
+    prevButton.innerHTML = '&#9665;';
+    prevButton.onclick = prevSlide;
+
+    // Botón de siguiente
+    var nextButton = document.createElement('div');
+    nextButton.id = 'next';
+    nextButton.innerHTML = '&#9655;';
+    nextButton.onclick = nextSlide;
+
+    // Contador de slides
+    label.id = 'counter';
+    label.innerText='0 / 0'
+
+    // Agrega los elementos al DOM
+
+    carouselContainer.appendChild(divSeccionTodasLasFacturas1);
+    carouselContainer.appendChild(divSeccionTodasLasFacturas2);
+    divSeccionTodasLasFacturas1.appendChild(label);
+
+    divSeccionTodasLasFacturas2.appendChild(prevButton);
+    divSeccionTodasLasFacturas2.appendChild(iframeContainer);
+    divSeccionTodasLasFacturas2.appendChild(nextButton);
+
+    contenedor.appendChild(carouselContainer);
+  }
+function generarEnlacesGoogleDrivePrueba(fileIds, fileType) {
+    // Convertir la cadena de IDs en un array
+    var idsArray = fileIds.split(',');
+    var enlaces = [];
+    // Verificar el tipo de archivo y construir enlaces para cada ID
+    if (fileType === 'doc') {
+        enlaces = idsArray.map(function (id) {
+            return 'https://docs.google.com/document/d/' + id.trim() + '/edit';
+        });
+    } else if (fileType === 'pdf') {
+        enlaces = idsArray.map(function (id) {
+            return  id.trim();
+        });
+    } else if (fileType === 'pdfId') {
+        enlaces = idsArray.map(function (id) {
+            return  'https://drive.google.com/file/d/' + id.trim() + '/view?usp=drivesdk';
+        });
+    } else {
+        // Tipo de archivo no reconocido
+        return null;
+    }
+
+    return enlaces;
+}
+
+// Función para crear los elementos del círculo clipper
+function createCircleClipper(position) {
+  const circleClipper = document.createElement('div');
+  circleClipper.classList.add('circle-clipper', position);
+
+  const circle = document.createElement('div');
+  circle.classList.add('circle');
+
+  circleClipper.appendChild(circle);
+  return circleClipper;
+}
+  function mostrarTodasLasFacturas(){
+    var carruselFactura =document.getElementById('iframe-container')
+    if(arrayFacturas.length>0){
+      // Utilizar la función addFrame con la información del albarán
+      addFrame(carruselFactura, arrayFacturas, ``, 1, '','iframe-slide'); 
+    } else {
+      generarAviso('¡No hay facturas!','error',false,false,'Para visualizar todos los albaranes, debemos seleccionar mínimo uno')
+    }
+  }
+/** FRAN AÑADE EL DATALIST  */
+function rellenarDatalistConArrayExistentesFran(idInput) {
+    // Verificar si el datalist ya existe
+    var dataList = document.getElementById("datalistAlbaranesSinFactura");
+    if (!dataList) {
+        // Si no existe, crearlo
+        dataList = document.createElement('datalist');
+        dataList.id = "datalistAlbaranesSinFactura";
+        document.body.appendChild(dataList);
+    } else {
+        // Si ya existe, limpiar su contenido
+        dataList.innerHTML = '';
+    }
+    var arrayDatalist=[];
+    albaranes.forEach(function(valueComparar) {
+        if(valueComparar[2]== document.getElementById("labelNExpediente").textContent && valueComparar[6] ==""){
+          arrayDatalist.push(valueComparar[4]);
+        }
+    });
+
+    // Añadir opciones al datalist
+    arrayDatalist.forEach(function(optionValue) {
+        var option = document.createElement('option');
+        option.value = optionValue;
+        dataList.appendChild(option);
+    });
+
+    // Asociar el datalist al input
+    var input = document.getElementById(idInput);
+    input.setAttribute("list", "datalistAlbaranesSinFactura");
+}
+
+function addSelectDataList(contenedor,textoLabel, idLabelInput, variable, opciones,idDataList,clase,preload,idLoad,idLabel) {
+  // console.log('opciones')
+  // console.log(contenedor)
+  // console.log(textoLabel)
+  // console.log(idLabelInput)
+  // console.log(variable)
+  // console.log(opciones)
+  // console.log(idDataList)
+  // console.log(clase)
+  // console.log(preload)
+  // console.log(idLoad)
+  // console.log(idLabel)
+  
+    var contenedorPrincipal= document.getElementById(contenedor)
+    contenedorPrincipal.setAttribute('class', clase );
+    if(preload){
+      // Crear el elemento principal
+      const preloaderWrapper = document.createElement('div');
+      preloaderWrapper.classList.add('preloader-wrapper', 'small', 'active');
+      preloaderWrapper.setAttribute('id', idLoad);
+
+      // Crear la capa del spinner
+      const spinnerLayer = document.createElement('div');
+      spinnerLayer.classList.add('spinner-layer', 'spinner-green-only');
+
+      // Crear los elementos del círculo clipper izquierdo
+      const circleClipperLeft = createCircleClipper('left');
+      // Crear el elemento gap-patch
+      const gapPatch = document.createElement('div');
+      gapPatch.classList.add('gap-patch');
+      // Crear los elementos del círculo clipper derecho
+      const circleClipperRight = createCircleClipper('right');
+
+      // Agregar los elementos al documento
+      spinnerLayer.appendChild(circleClipperLeft);
+      spinnerLayer.appendChild(gapPatch);
+      spinnerLayer.appendChild(circleClipperRight);
+      preloaderWrapper.appendChild(spinnerLayer);
+      contenedorPrincipal.appendChild(preloaderWrapper); 
+      // Agregar el preloader al documento (por ejemplo, al body)
+
+      const labelProducto = document.createElement('label');
+      labelProducto.setAttribute('id', idLabel);
+      labelProducto.setAttribute('for', idLabelInput);
+      labelProducto.setAttribute('class', 'ocultar');
+      labelProducto.textContent = textoLabel;
+      
+      const inputProducto = document.createElement('input');
+      inputProducto.setAttribute('id', idLabelInput);
+      inputProducto.setAttribute('name', idLabelInput);
+      inputProducto.setAttribute('type', 'text');
+      inputProducto.setAttribute('class', 'form-control producto campoRellenable ocultar');
+      inputProducto.setAttribute('list', idDataList);
+      inputProducto.miVariable = 0;
+      inputProducto.setAttribute('data-mi-variable', variable);
+      
+      const dataListProductos = document.createElement('datalist');
+      dataListProductos.setAttribute('id', idDataList);
+
+      var divValidacion = document.createElement('div');
+      divValidacion.setAttribute('id', 'validacion'+idLabelInput);
+
+      // Agregar opciones al datalist
+      opciones.forEach(function (opcion) {
+          var optionElement = document.createElement('option');
+          optionElement.value = opcion;
+          dataListProductos.appendChild(optionElement);
+      });
+
+      contenedorPrincipal.appendChild(labelProducto);
+      contenedorPrincipal.appendChild(inputProducto);
+      contenedorPrincipal.appendChild(dataListProductos);
+      contenedorPrincipal.appendChild(divValidacion);
+
+      return inputProducto;  
+    }else{
+      // Agregar el preloader al documento (por ejemplo, al body)
+
+      const labelProducto = document.createElement('label');
+      labelProducto.setAttribute('for', idLabelInput);
+      labelProducto.textContent = textoLabel;
+      
+      const inputProducto = document.createElement('input');
+      inputProducto.setAttribute('id', idLabelInput);
+      inputProducto.setAttribute('name', idLabelInput);
+      inputProducto.setAttribute('type', 'text');
+      inputProducto.setAttribute('class', 'form-control producto campoRellenable');
+      inputProducto.setAttribute('list', idDataList);
+      inputProducto.miVariable = 0;
+      inputProducto.setAttribute('data-mi-variable', variable);
+      
+      const dataListProductos = document.createElement('datalist');
+      dataListProductos.setAttribute('id', idDataList);
+
+      var divValidacion = document.createElement('div');
+      divValidacion.setAttribute('id', 'validacion'+idLabelInput);
+
+      // Agregar opciones al datalist
+      opciones.forEach(function (opcion) {
+        var optionElement = document.createElement('option');
+          optionElement.value = opcion;
+          dataListProductos.appendChild(optionElement);
+      });
+
+      contenedorPrincipal.appendChild(labelProducto);
+      contenedorPrincipal.appendChild(inputProducto);
+      contenedorPrincipal.appendChild(dataListProductos);
+      contenedorPrincipal.appendChild(divValidacion);
+
+      return inputProducto;
+    }
+    
+}
+  function generarSelectGeneral(arrayValue,arrayTexto,selectHtml) {
+    // Eliminamos todas las opciones existentes, excepto el primer elemento
+    while (selectHtml.options.length > 1) {
+      selectHtml.remove(1);
+    }
+    arrayValue.forEach((dato, i, x) => {
+      let opcion = document.createElement("option");
+      opcion.setAttribute("value",  arrayTexto[i]);
+      let optionTemporalTexto = document.createTextNode(dato);
+      opcion.appendChild(optionTemporalTexto);
+      selectHtml.appendChild(opcion);
+    });
+
+    M.FormSelect.init(selectHtml, {
+      closeOnClick: false
+    });
+  }
+  // Generar selec, le pasamos los valores y el eleemento html
+  function generarSelect(value,selectHtml){
+    // Eliminamos todas las opciones existentes, excepto el primer elemento
+    while (selectHtml.options.length > 1) {
+      selectHtml.remove(1);
+    }
+    value.forEach(dato=>{
+      let opcion = document.createElement("option");
+      opcion.setAttribute("value",dato);
+      let optionTemporalTexto = document.createTextNode(dato);
+      opcion.appendChild(optionTemporalTexto);
+      selectHtml.appendChild(opcion);
+    });
+    M.FormSelect.init(selectHtml,{
+      closeOnClick: false
+    });
+  }
+  function addTabla(contenedor,idDiv,classDiv) {
+    // Crear el elemento table
+    var tabla = document.createElement('table');
+
+    tabla.setAttribute('id', idDiv);
+    //tabla.setAttribute('class', classDiv);
+    tabla.className = "display";
+    tabla.setAttribute("cellspacing", "0");
+    tabla.setAttribute("width", "100%");
+    // Puedes agregar más configuraciones y contenido a la tabla según tus necesidades
+
+    // Añadir la tabla al contenedor deseado (en este caso, 'contenedorTabla')
+    document.getElementById(contenedor).appendChild(tabla);
+    return tabla
+  }
+
+  // function addTitulo(idHtml,titulo){
+  //   document.getElementById(idHtml).textContent = titulo
+  // }
+    function addForm(contenedor,idDiv,classDiv){
+    var contenedor = document.getElementById(contenedor);
+    var nuevoForm = document.createElement('form');
+    nuevoForm.setAttribute('id', idDiv);
+    nuevoForm.setAttribute('class', classDiv);
+    contenedor.appendChild(nuevoForm);
+    return nuevoForm
+  }
+  function addDiv(contenedor,idDiv,classDiv){
+    var contenedor = document.getElementById(contenedor);
+    var nuevoDiv = document.createElement('div');
+    nuevoDiv.setAttribute('id', idDiv);
+    nuevoDiv.setAttribute('class', classDiv);
+    contenedor.appendChild(nuevoDiv);
+    return nuevoDiv
+
+  }
+  function addDivMostrarDatosFactura(contenedor, idDiv, classDiv, titulo, contenido) {
+    var contenedor = document.getElementById(contenedor);
+    var nuevoDiv = document.createElement('div');
+    nuevoDiv.setAttribute('id', idDiv);
+    nuevoDiv.setAttribute('class', classDiv);
+
+    var divTitulo = document.createElement('div');
+    divTitulo.innerText = titulo;
+    divTitulo.setAttribute('class', "addDivMostrarDatosFacturaClaseTitulo");
+    nuevoDiv.appendChild(divTitulo);
+
+    var divContenido = document.createElement('div');
+    divContenido.innerText = contenido;
+    divContenido.setAttribute('class', "addDivMostrarDatosFacturaClaseContenido");
+    nuevoDiv.appendChild(divContenido);
+
+    contenedor.appendChild(nuevoDiv);
+    return nuevoDiv;
+}
+
+  /**Funcion para generar botones a traves de JS en el HTML
+   * Recibe:
+   * - id contenedor del destino donde se va a colocar el elemento
+   * - id que se le va a dar al boton
+   * - Clase CSS del boton
+   * - string: funcion que va a ejecutar en el onclick
+   * - texto del boton
+   * - booleano habilitado o no
+   * - booleano tooltip
+   * - texto que va a aparecer en el tooltip si va a aparecer el texto
+   * - Posicion de tooltip (top, button, left, right)
+   * 
+   * - Devuelve elemento html del boton
+   */
+function addBoton(contenedorBotones, idBtn, classBtn, funcion, txtoBtn, habilitado,tooltip,textooltip,posicion) {
+    // Obtén el div donde quieres agregar el nuevo elemento
+    var contenedorBotones = document.getElementById(contenedorBotones);
+    // Crea un elemento de ancla <a>
+    var boton = document.createElement('a');
+    // Asigna los atributos al nuevo elemento
+    boton.setAttribute('id', idBtn);
+    boton.setAttribute('class', classBtn);
+    boton.setAttribute('onclick', funcion); // Asigna la función pasada como parámetro
+    if (habilitado) {
+      boton.setAttribute('disabled', habilitado); // Asigna la función pasada como parámetro
+    }
+    boton.textContent = txtoBtn; // Establece el texto del enlace
+    if (tooltip) {
+      // Añadir tool tip de Materialize
+      boton.setAttribute('data-tooltip', textooltip);
+      boton.setAttribute('data-position', posicion);
+      // Inicializar tooltip de Materialize
+      M.Tooltip.init(boton);
+    }
+    // Agrega el nuevo elemento al div
+    contenedorBotones.appendChild(boton);
+    return boton;
+}
+
+  function addTextArea(idContenedor,idNameTextArea,texto,max){
+    // Crear el contenedor padre
+    var contenedorPadre = document.getElementById(idContenedor);
+    // Crear el elemento div
+    var divElement = document.createElement('div');
+    divElement.classList.add('flexRowSpaceEvenlyWrap', 'col', 's12', 'row');
+    // Crear el elemento interno
+    var elementoListaPresupuesto = document.createElement('div');
+    elementoListaPresupuesto.classList.add('elementoListaPresupuesto', 'input-field', 'col', 's12', 'm12', 'l12', 'row');
+    // Crear el elemento de texto
+    var textArea = document.createElement('textarea');
+    textArea.setAttribute('type', 'text');
+    textArea.classList.add('materialize-textarea', 'campoRellenable');
+    textArea.setAttribute('name', idNameTextArea);
+    textArea.setAttribute('id', idNameTextArea);
+    if(max !=''){
+      textArea.setAttribute('maxlength', max);
+    }
+    // Crear el elemento de etiqueta
+    var label = document.createElement('label');
+    label.setAttribute('for', idNameTextArea);
+    label.textContent = texto;
+    // Crear el elemento de validación
+    var validacion = document.createElement('div');
+    validacion.setAttribute('id', 'validacion'+idNameTextArea);
+    // Anexar todos los elementos apropiadamente
+    elementoListaPresupuesto.appendChild(textArea);
+    elementoListaPresupuesto.appendChild(label);
+    elementoListaPresupuesto.appendChild(validacion);
+    divElement.appendChild(elementoListaPresupuesto);
+    contenedorPadre.appendChild(divElement);
+    return divElement
+  }
+
+  function addInput(idContenedor,idNameInput,tipo,texto,clase,ocultar,retorno,deshabilitado) {
+    var contenedorPadre = document.getElementById(idContenedor);
+
+    // Crear el elemento div
+    var divElement = document.createElement('div');
+    divElement.setAttribute('class', ocultar);
+
+    // Crear el elemento input
+    var input = document.createElement('input');
+    input.setAttribute('type', tipo);
+    input.className =  clase;
+    input.setAttribute('name', idNameInput);
+    input.setAttribute('id', idNameInput);
+
+    // Añadir la propiedad disabled si es true
+    if (deshabilitado) {
+        input.setAttribute('disabled', 'disabled');
+    }
+
+    // Crear el elemento label
+    var label = document.createElement('label');
+    label.setAttribute('for', idNameInput);
+    //label.setAttribute('id', 'label'+idNameInput);
+    label.textContent = texto;
+
+    // Crear el elemento div para validación
+    var divValidacion = document.createElement('div');
+    divValidacion.setAttribute('id', 'validacion'+idNameInput);
+
+    // Adjuntar los elementos al div principal
+    divElement.appendChild(input);
+    divElement.appendChild(label);
+    divElement.appendChild(divValidacion);
+    contenedorPadre.appendChild(divElement);
+    if(retorno =='retornoInput'){
+      return input
+
+    }else{
+      return divElement
+    }
+   
+  }
+
+
+
+  function addTitulo(elemetoHtml,idContenedor,texto,clase,id){
+    // Crear el contenedor padre
+    var contenedorPadre = document.getElementById(idContenedor);
+    // Crear el elemento h5
+    var h5Element = document.createElement(elemetoHtml);
+    h5Element.setAttribute("class", clase);
+    h5Element.textContent = texto;
+    if(id){
+      h5Element.setAttribute("id", id);
+    }
+    // Anexar el elemento al contenedor padre
+    contenedorPadre.appendChild(h5Element);
+  }
+  function addTituloNegrita(elementoHtml, idContenedor, texto, clase, id) {
+    // Crear el contenedor padre
+    var contenedorPadre = document.getElementById(idContenedor);
+    // Crear el elemento
+    var elemento = document.createElement(elementoHtml);
+    elemento.setAttribute("class", clase);
+    
+    // Verificar si el texto contiene la etiqueta <b> y separarlo
+    var partesTexto = texto.split("<b>");
+    elemento.textContent = partesTexto[0]; // Establecer la primera parte del texto
+
+    // Si hay una etiqueta <b> en el texto, agregar una parte de texto en negrita
+    if (partesTexto.length > 1) {
+        var spanNegrita = document.createElement("span");
+        spanNegrita.innerHTML = partesTexto[1].split("</b>")[0];
+        spanNegrita.style.fontWeight = "bold"; // Aplicar estilo de negrita al span
+        elemento.appendChild(spanNegrita); // Anexar el span al elemento
+        elemento.appendChild(document.createTextNode(partesTexto[1].split("</b>")[1])); // Anexar el resto del texto
+    }
+
+    if (id) {
+        elemento.setAttribute("id", id);
+    }
+    // Anexar el elemento al contenedor padre
+    contenedorPadre.appendChild(elemento);
+}
+
+ function addSelect(idContenedor, idNameInput, opciones, esMultiple) {
+    var contenedorPadre = document.getElementById(idContenedor);
+
+    // Crear el elemento div
+    var divElement = document.createElement("div");
+    divElement.setAttribute("class", "input-field");
+    divElement.setAttribute("id", "divTipoPresupusto");
+
+    // Crear el elemento de ícono
+    var iconElement = document.createElement("i");
+    iconElement.setAttribute("class", "material-icons prefix");
+    iconElement.textContent = "assessment";
+
+    // Crear el elemento select
+    var selectElement = document.createElement("select");
+    selectElement.setAttribute("class", "campoRellenable");
+    selectElement.setAttribute("id", idNameInput);
+    selectElement.setAttribute("name", idNameInput);
+
+    // Configurar el atributo 'multiple' si es necesario
+    if (esMultiple) {
+        selectElement.setAttribute("multiple", "multiple");
+    }
+
+    for (var i = 0; i < opciones.length; i++) {
+        var option = document.createElement("option");
+        if (i === 0) {
+            option.textContent = opciones[i];
+            option.setAttribute("value", '');
+            option.disabled = true;
+            option.selected = true;
+        } else {
+            option.setAttribute("value", opciones[i]);
+            option.textContent = opciones[i];
+            // Si es el primer elemento, selecciónalo y deshabilítalo  
+        }
+        selectElement.appendChild(option);
+    }
+
+    // Añadir el elemento select al div
+    divElement.appendChild(iconElement);
+    divElement.appendChild(selectElement);
+
+    // Añadir el div al documento
+    document.body.appendChild(divElement);
+
+    // Crear el elemento para validación
+    var validationElement = document.createElement("div");
+    validationElement.setAttribute("id", "validacion" + idNameInput);
+
+    // Añadir el elemento de validación al div
+    divElement.appendChild(validationElement);
+
+    contenedorPadre.appendChild(divElement);
+    M.FormSelect.init(selectElement);
+    return selectElement;
+}
+
+
+function addSelectValue(idContenedor, idNameInput, opciones,valores,esMultiple) {
+    var contenedorPadre = document.getElementById(idContenedor);
+
+    // Crear el elemento div
+    var divElement = document.createElement("div");
+    divElement.setAttribute("class", "input-field");
+    divElement.setAttribute("id", "divTipoPresupusto");
+
+    // Crear el elemento de ícono
+    var iconElement = document.createElement("i");
+    iconElement.setAttribute("class", "material-icons prefix");
+    iconElement.textContent = "assessment";
+
+    // Crear el elemento select
+    var selectElement = document.createElement("select");
+    selectElement.setAttribute("class", "campoRellenable");
+    selectElement.setAttribute("id", idNameInput);
+    selectElement.setAttribute("name", idNameInput);
+    if (esMultiple) {
+        selectElement.setAttribute("multiple", "multiple");
+    }
+    for (var i = 0; i < opciones.length; i++) {
+      var option = document.createElement("option");
+      if (i === 0) {
+        option.textContent = opciones[i];
+        option.setAttribute("value", '');
+        option.disabled = true;
+        option.selected = true;
+      }else{
+        option.setAttribute("value", valores[i]);
+        option.textContent = opciones[i];
+        // Si es el primer elemento, selecciónalo y deshabilítalo  
+      }
+      selectElement.appendChild(option);
+    }
+
+    // Añadir el elemento select al div
+    divElement.appendChild(iconElement);
+    divElement.appendChild(selectElement);
+
+    // Añadir el div al documento
+    document.body.appendChild(divElement);
+
+    // Crear el elemento para validación
+    var validationElement = document.createElement("div");
+    validationElement.setAttribute("id", "validacion" + idNameInput);
+
+    // Añadir el elemento de validación al div
+    divElement.appendChild(validationElement);
+
+    contenedorPadre.appendChild(divElement);
+    M.FormSelect.init(selectElement);
+    selectElement.addEventListener('change', function(event) {
+        var valorSeleccionado = event.target.value;
+        var arrayFiltrado = expedientes.filter(function(expediente) {
+          return expediente[0] == valorSeleccionado;
+        });
+    });
+    return selectElement
+  }
+
+function addSelect33(idContenedor, idNameInput, opciones) {
+    var contenedorPadre = document.getElementById(idContenedor);
+
+  // Crear elementos
+  var pElement = document.createElement("p");
+  var labelElement = document.createElement("label");
+  var inputElement = document.createElement("input");
+  var spanElement = document.createElement("span");
+
+  // Configurar el checkbox
+  inputElement.setAttribute("type", "checkbox");
+  inputElement.setAttribute("id", idNameInput);
+  inputElement.setAttribute("name", idNameInput);
+  // Agregar texto al span
+  spanElement.innerText = "Red";
+
+  // Agregar el input y el span al label
+  labelElement.appendChild(inputElement);
+  labelElement.appendChild(spanElement);
+
+  // Agregar el label al elemento p
+  pElement.appendChild(labelElement);
+
+      contenedorPadre.appendChild(pElement);
+
+
+}
+</script>
+<!------------------------------------ CARRUSEL ------------------------------------------------------------->
+<script>
+  function comprobarNprocesos(idTextoNotificacion,texto){
+    document.getElementById(idTextoNotificacion).innerHTML = texto;
+    if(nProcesos>0){
+      mostrarElementoSuperpuesto();
+    }else{
+      ocultarElementoSuperpuesto();
+    }
+  }
+
+  function mostrarTodasLasFacturas(){
+    var carruselFactura =document.getElementById('iframe-container')
+    if(arrayFacturas.length>0){
+      // Utilizar la función addFrame con la información del albarán
+      addFrame(carruselFactura, arrayFacturas, ``, 1, '','iframe-slide'); 
+    } else {
+      generarAviso('¡No hay facturas!','error',false,false,'Para visualizar todos los albaranes, debemos seleccionar mínimo uno')
+    }
+  }
+
+// Obtener los elementos del carrusel
+    // const prevButton = document.getElementById('prev');
+    // const nextButton = document.getElementById('next');
+    // const iframeContainer = document.getElementById('iframe-container');
+
+
+    // Función para actualizar la visibilidad de los iframes
+    function updateSlideVisibility(iframes) {
+      const counter = document.getElementById('counter');
+
+      var totalSlides = iframes.length;
+      if(currentIndex + 1>totalSlides){
+        currentIndex=0;
+      }
+
+        iframes.forEach((iframe, index) => {
+            if (index === currentIndex) {
+                iframe.style.display = 'block';
+            } else {
+                iframe.style.display = 'none';
+            }
+        });
+        counter.textContent = `${currentIndex + 1} / ${totalSlides}`;
+    }
+
+    // Función para avanzar al siguiente slide
+    function nextSlide() {
+
+          const iframes = document.querySelectorAll('.iframe-slide');
+            var totalSlides = iframes.length;
+
+        currentIndex = (currentIndex + 1) % totalSlides;
+        updateSlideVisibility(iframes);
+    }
+
+    // Función para retroceder al slide anterior
+    function prevSlide() {
+      const iframes = document.querySelectorAll('.iframe-slide');
+      var totalSlides = iframes.length;
+
+      currentIndex = (currentIndex - 1 + totalSlides) % totalSlides;
+      updateSlideVisibility(iframes);
+    }
+
+
+
+
+  function configurarModal(idModal,idContenidoModal ,claseAdd,claseRemove1,claseRemove2,classContenidoModal){
+    //Añadimos o quitmos clase para configurar el tamaño del modal y del contenido del modal
+    document.getElementById(idModal).classList.add(claseAdd)
+    document.getElementById(idModal).classList.remove(claseRemove1)
+    document.getElementById(idModal).classList.remove(claseRemove2)
+    document.getElementById(idContenidoModal).classList.add(classContenidoModal)
+    //Eliminamos el contenido del encabezado
+    document.getElementById('encabezadoModal').innerHTML=''
+    //Contenedores principales donde vamos a cargar los elmentos, lo vaciamos
+    document.getElementById('contenidoGeneral').innerHTML=''
+    document.getElementById('contenedorBotones').innerHTML=''
+  }
+    function actualizarDatosAlbaranes(datos){
+    nProcesos += 1;
+    comprobarNprocesos('textoNotificacion','NºSolicitudes de datos: ' + nProcesos)
+    // Albaranes
+    obtenerDatos(datosAlbaranes).then(function(albaranesRes) {
+
+      nProcesos -= 1;
+      comprobarNprocesos('textoNotificacion','NºSolicitudes de datos: ' + nProcesos)
+      const albaranesAsignados = albaranesRes.filter(albaran => {
+        return albaran[2] === datos[3] && albaran[6] === datos[2];
+      });
+
+      //Damos el formato deseado [{},{}]
+      var conjuntoAlbaranesAsignadosVar = albaranesAsignados.map(item => {
+        const id = item[4]; // Puedes ajustar el índice según la posición del ID en tus datos
+        const urlArchivoAlbaran = item[5];
+        const fechaAlbaran = item[3];
+        return { [id]: { fechaAlbaran, urlArchivoAlbaran } };
+      });
+
+
+      var btnVerAlbaranes = document.getElementById('btnVerAlbaranes');
+      btnVerAlbaranes.parentNode.removeChild(btnVerAlbaranes);
+      crearbtn(datos,conjuntoAlbaranesAsignadosVar)
+      document.getElementById('arrayAlbaranes').value= JSON.stringify(conjuntoAlbaranesAsignadosVar)
+      
+      
+    return conjuntoAlbaranesAsignadosVar
+    }).catch(function(error) {
+    });
+  }
+  // Función para manejar errores
+  function manejarError(error) {
+    console.error("Se produjo un error:", error);
+    // Aquí podrías agregar código para mostrar un mensaje de error al usuario
+  }
+  function copiarTexto(texto) {
+    // Crea un elemento de textarea temporal
+    var tempTextArea = document.createElement("textarea");
+    // Asigna el texto al elemento de textarea
+    tempTextArea.value = texto;
+    // Oculta el textarea fuera del área visible de la pantalla
+    tempTextArea.style.position = "absolute";
+    tempTextArea.style.left = "-9999px";
+    tempTextArea.style.top = "0";
+    // Agrega el elemento temporal al DOM
+    document.body.appendChild(tempTextArea);
+    // Selecciona y copia el texto en el textarea temporal
+    tempTextArea.select();
+    document.execCommand("copy");
+    // Elimina el elemento temporal del DOM
+    document.body.removeChild(tempTextArea);
+
+    avisoAccionRapido('Copiado' ,'claseAccion')
+
+
+
+
+  }
+</script>

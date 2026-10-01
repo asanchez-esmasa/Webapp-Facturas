@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <base target="_top">
+  <!--Importaciones CSS-->
+  <?!= include('000IMPORTACIONESMATERIALIZECSS');?>
+  <?!= include('1ComponenteNavBarCSS');?>
+  <?!= include('1ComponenteFooterCSS');?>
+  <?!= include('0GLOBALCSS');?>
+
+
+</head>
+
+<body>
+  <!--NavBar-->
+  <?!= include('1ComponenteNavBar');?>
+  <!--Contenido principal-->
+  <div id='contenidoPrincipal'>
+    <div class="bckgimg">
+      <div class="logoTextoInicio">
+        <h4 class="introtext center">No tienes permiso para acceder a esta aplicación. Para cualquier aclaración ponte
+          en contacto con la oficina técnica de ESMASA”
+        </h4>
+      </div>
+    </div>
+  </div>
+  </div>
+  <!--Footer info App-->
+  <?!= include('1ComponenteFooter');?>
+  <!--Importaciones y js-->
+  <?!= include('Variables');?>
+
+  <script>
+    var usuarioString = '<?= usuario ?>';
+    var usuario;
+  </script>
+  <?!= include('UsuarioJS');?>
+  <?!= include('000IMPORTACIONESMATERIALIZEJS');?>
+</body>
+
+</html>
