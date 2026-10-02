@@ -647,25 +647,27 @@ function adjuntarAlbaranesAlaFacturaGs(formulario) {
 
   var stringObjeto = JSON.stringify(albaranesCombinados);
 
-  // Recorremos cada elemento del array
-  albaranesCombinados.forEach(albaran => {
-    // Extraemos el objeto albaran dentro del objeto actual
-    const nombreAlbaran = Object.keys(albaran)[0];
-    const detalleAlbaran = albaran[nombreAlbaran];
-
-    // Accedemos a las propiedades del objeto albaran
-    const fechaAlbaran = detalleAlbaran.fechaAlbaran;
-    const urlArchivoAlbaran = detalleAlbaran.urlArchivoAlbaran;
-
-    // Haces lo que necesites con los datos de cada albarán
-    console.log("Nombre del albarán:", nombreAlbaran);
-    console.log("Fecha del albarán:", fechaAlbaran);
-    console.log("URL del archivo del albarán:", urlArchivoAlbaran);
-    columnasValores = [idFactura]
-    var columnasHoja = [6]
-    actualizarDatosEnHoja(idLibroFacturas, nombreHojaAlbaranes, nombreAlbaran, 4, columnasValores, columnasHoja)
-    return albaranesCombinados
-  });
+  // Vinculamos en BigQuery los albaranes nuevos a la factura (ID_Factura = id interno de la factura).
+  // Antes se llamaba a actualizarDatosEnHoja con los parámetros de la versión de Sheets y fallaba.
+  const numerosAlbaran = arrayAlbaranesPorAdjuntar.map(albaran => Object.keys(albaran)[0]).filter(Boolean);
+  console.log("Albaranes a vincular:", JSON.stringify(numerosAlbaran));
+  if (numerosAlbaran.length > 0) {
+    const queryVincular = `
+      UPDATE \`${idProyectoBigquery}.${idDatasetContabilidad}.${idTablaAlbaranes}\`
+      SET
+        ID_Factura = @idFactura,
+        User_adjunta_albaran_a_factura = @usuario
+      WHERE NumExpediente = @nExpediente
+        AND NumAlbaran IN UNNEST(@numerosAlbaran)
+    `;
+    const paramsVincular = [
+      { name: "idFactura", parameterType: { type: "STRING" }, parameterValue: { value: idFactura } },
+      { name: "usuario", parameterType: { type: "STRING" }, parameterValue: { value: usuarioActivo() } },
+      { name: "nExpediente", parameterType: { type: "STRING" }, parameterValue: { value: formulario.nExpediente } },
+      { name: "numerosAlbaran", parameterType: { type: "ARRAY", arrayType: { type: "STRING" } }, parameterValue: { arrayValues: numerosAlbaran.map(n => ({ value: n })) } }
+    ];
+    ejecutarQueryBQConLogs(idProyectoBigquery, queryVincular, paramsVincular);
+  }
 
 
 

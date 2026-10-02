@@ -3,7 +3,7 @@ function generateUniqueId() {
 }
 function adjuntarAlbaranesFacturas(formulario) {
   // Desactivada: escribía los enlaces en la columna Datos_proveedor y borraba el CIF/razón social
-  // del proveedor. Ningún botón la usa (los albaranes se adjuntan con adjuntarAlbaranesAlaFacturaGs).
+  // del proveedor. Ningún botón la usa (los albaranes se adjuntan con guardarAlbaranes → recorrerListaAlbaranesFactura).
   // Si se recupera, hay que decidir antes en qué columna deben guardarse los enlaces.
   throw new Error("adjuntarAlbaranesFacturas está desactivada: sobrescribía Datos_proveedor.");
   var arrayLinks;
