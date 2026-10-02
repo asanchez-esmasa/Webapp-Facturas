@@ -110,7 +110,8 @@ function recoger_datos_licitaciones_bq() {
     FROM \`${projectId}.${datasetId}.${tableId}\` AS l
     LEFT JOIN \`${projectId}.${datasetId}.tabla_BBDD_Usuarios\` AS u
       ON l.responsable_contrato = u.Nombre
-    WHERE l.estado NOT IN ('VENCIDA', 'PRO VENCIDA')
+    -- Desierta/Desistida: licitaciones sin contratista, no se puede facturar contra ellas
+    WHERE l.estado NOT IN ('VENCIDA', 'PRO VENCIDA', 'Desierta', 'Desistida')
       AND l.estado IS NOT NULL
       AND l.estado != ''
   `;
