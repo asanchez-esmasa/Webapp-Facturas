@@ -1137,6 +1137,14 @@ function resetPreview(inputId, boxId, dropZoneId, infoId) {
     elementoLoader.classList.add(claseAdd);
     elementoTextoLoader.textContent=textoDeCarga;
   }
+  // Gestor de errores para google.script.run: oculta el loader y muestra el error del servidor
+  function manejarErrorServidor(titulo){
+    return function(error){
+      console.error(titulo, error);
+      mostrarOcultarLoaderGeneral('cargaEnvioGeneral','textoCargaGeneral',"",'carga','ocultarImportant')
+      generarAviso(titulo,'error',false,false,(error && error.message) ? error.message : String(error))
+    }
+  }
 </script>
 <!------------------------OBTENER EL USUARIO DE UN CORREO ELECTRONICO------------------------------->
 <script>
@@ -1298,7 +1306,7 @@ function resetPreview(inputId, boxId, dropZoneId, infoId) {
       .withSuccessHandler(function (value) {
         actualizarTablasFacturas(value)
       }).obtenerDatosTablaBQ(datosFirma1, true); 
-    }).firmaFactura(formulario);  
+    }).withFailureHandler(manejarErrorServidor('Error al firmar la factura')).firmaFactura(formulario);  
   }
 
 

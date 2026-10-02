@@ -1,8 +1,7 @@
 /********************************VARIABLES GLOBALES**********************************/
 
-var contratacion = 'contratacion@esamsalcorcon.com'
+var contratacion = 'contratacion@esmasalcorcon.com'
 //var contratacion = 'a.sanchez@esmasalcorcon.com'
-var datosFirma1 = [idProyectoBigquery,idDatasetContabilidad,idTablaFacturas]
 var datosFirma2 = ['12_z17iG_GyRFpf0F0XbcRJy6651_6ECwOMP7NEcVtSU', 'Facturas Enviadas a SAGE'];
 var idLibroFacturas = '12_z17iG_GyRFpf0F0XbcRJy6651_6ECwOMP7NEcVtSU'
 var nombreHojaFacturasSolicitarFirma = 'Facturas'
@@ -22,6 +21,8 @@ var idDatasetContabilidad ='DATOS_BBDD_Contabilidad'
 var idTablaFacturas = 'tabla_BBDD_Facturas'
 var idTablaAlbaranes = 'tabla_BBDD_Albaranes'
 var idTablaHistorialAlbaranes = 'tabla_BBDD_Historial_Albaranes'
+// Debe ir después de las variables de BigQuery: si se declara antes, queda [undefined, undefined, undefined]
+var datosFirma1 = [idProyectoBigquery,idDatasetContabilidad,idTablaFacturas]
   // 🔹 Usuarios que SÍ pueden cargar expedientes
 const usuariosConExpedientes = [
     "z.alonso@esmasalcorcon.com",

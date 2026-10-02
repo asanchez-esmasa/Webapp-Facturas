@@ -179,6 +179,14 @@ function guardarDatosSolicitudFirmaFactura2(formulario) {
     Logger.log("num 3")
     var cuerpoSolicitudFirma = generarCuerpoSolicitudFirma(objetoFactura)
 
+    //INSERT BIGQUERY (antes de enviar correos: si falla, no se avisa de una factura que no existe)
+    try {
+      guardarDatoTabla(idProyectoBigquery, idDatasetContabilidad, idTablaFacturas, objetoFactura)
+    } catch (errorInsert) {
+      createFile.setTrashed(true) // El PDF subido quedaría huérfano
+      throw errorInsert
+    }
+
     if (objetoFactura.usuarioReceptor != "Sin responsable") {
       Logger.log("entra con responsable")
       //Enviar correo de la solicitud
@@ -189,8 +197,6 @@ function guardarDatosSolicitudFirmaFactura2(formulario) {
         enviarCorreoConAdjunto(usuarioTallerTaller, 'Solicitud firma factura: ' + objetoFactura.numeroFactura, cuerpoSolicitudAdjuntarAlbaranes, '')
       }
     }
-    //INSERT BIGQUERY
-    guardarDatoTabla(idProyectoBigquery, idDatasetContabilidad, idTablaFacturas, objetoFactura)
     /** MANTENER CEROS EN EL NUMERO DE FACTURAS */
     // var ss = SpreadsheetApp.openById(idLibroFacturas);
     // var sheet = ss.getSheetByName(nombreHojaFacturasSolicitarFirma);
@@ -290,6 +296,7 @@ function firmaFactura(formulario) {
   var arrayUsuarioActivo = infoUsuario()
 
   firmapdf(idDelArchivo, usuarioActivo(), 'down').then((id_pdf_firmado) => {
+    try {
     console.log("entra al then ")
     console.log(id_pdf_firmado)
     var objetoFactura = new FacturaFirmada(marcaTemporal, formulario.idFactura, 'nExpediente', usuarioActivo(), formulario.obsFactura, id_pdf_firmado, 'Firmado')
@@ -344,7 +351,11 @@ function firmaFactura(formulario) {
     var cuerpoA = generarCuerpoFirmaRealizada(objetoFactura, datosAntesDeFirmar)
     enviarCorreoConAdjunto(usuarioActivo(), 'Firma realizada Nª:' + datosAntesDeFirmar[1], cuerpoA, '')
     //guardarDatoTabla(idLibroFacturas, nombreHojaFacturasSolicitarFirma, objetoFactura)
-  }).catch((error) => {
+    } catch (errorTrasFirma) {
+      // La firma ya está hecha: no se pasa al bloque de error de firma para no perder el PDF firmado
+      console.error("❌ Error después de firmar la factura " + formulario.idFactura + " (PDF firmado: " + id_pdf_firmado + "): " + (errorTrasFirma && errorTrasFirma.stack ? errorTrasFirma.stack : errorTrasFirma))
+    }
+  }, (error) => {
     var errorRecibido = error;
     console.log("entra al catch " + errorRecibido)
     console.log("datosAntesDeFirmar[16]  " + datosAntesDeFirmar[16])
@@ -378,20 +389,20 @@ function firmaFactura(formulario) {
     let observacionessolicitante = datosAntesDeFirmar[8];
     let observacionesfirmante = formulario["obsFactura"];
     let urlFactura = datosAntesDeFirmar[9];
-    let usuarioActivo = Session.getActiveUser().getEmail();
+    let emailFirmante = Session.getActiveUser().getEmail();
     let marcaTemporalComprobacion = obtenerMarcaTemporalDDMMYYYYHHmm();
 
     // Suponiendo que generarPDFFirmaFacturaSustituta es una función que acepta estos parámetros
-    let id_pdf_firmado = generarPDFFirmaFacturaSustituta(fechaSolicitudFirma, numFactura, idFactura, numExpediente, fechaFactura, usuarioSolicitud, usuarioFirmante, precioSinIva, observacionessolicitante, observacionesfirmante, urlFactura, proveedor, razon, usuarioActivo, marcaTemporalComprobacion)
+    let id_pdf_firmado = generarPDFFirmaFacturaSustituta(fechaSolicitudFirma, numFactura, idFactura, numExpediente, fechaFactura, usuarioSolicitud, usuarioFirmante, precioSinIva, observacionessolicitante, observacionesfirmante, urlFactura, proveedor, razon, emailFirmante, marcaTemporalComprobacion)
     console.log("objetoFactura")
     console.log("marcaTemporal" + marcaTemporal)
     console.log("formulario.idFactura" + formulario.idFactura)
-    console.log("usuarioActivo()" + usuarioActivo)
+    console.log("usuarioActivo()" + emailFirmante)
     console.log("formulario.obsFactura" + formulario.obsFactura)
     console.log("id_pdf_firmado" + id_pdf_firmado)
 
-    var objetoFactura = new FacturaFirmada(marcaTemporal, formulario.idFactura, 'nExpediente', usuarioActivo, formulario.obsFactura, id_pdf_firmado, 'Firmado')
-    var historiaEstado = { marcaTemporal: new Date, estado: 'Firmado', usuario: usuarioActivo, observaciones: formulario["obsFactura"] }
+    var objetoFactura = new FacturaFirmada(marcaTemporal, formulario.idFactura, 'nExpediente', emailFirmante, formulario.obsFactura, id_pdf_firmado, 'Firmado')
+    var historiaEstado = { marcaTemporal: new Date, estado: 'Firmado', usuario: emailFirmante, observaciones: formulario["obsFactura"] }
     var marcaTemporalHistoriaEstado = formatearMarcaTemporal(historiaEstado.marcaTemporal);
     var observacionesHistoriaEstado = historiaEstado.observaciones;
     var historiaEstadoString = JSON.stringify(historiaEstado);

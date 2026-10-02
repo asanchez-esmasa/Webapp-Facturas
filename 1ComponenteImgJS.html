@@ -233,6 +233,7 @@ function comprobarFotosAlbaranes(dato1, dato2, dato3) {
 
       console.groupEnd();
     })
+    .withFailureHandler(manejarErrorServidor('Error al guardar los albaranes'))
     .guardarAlbaranes(formulario);
 
   console.groupEnd();
@@ -488,6 +489,7 @@ function comprobarFotosAlbaranes(dato1, dato2, dato3) {
             actualizarTablasFacturas(value)
           }).obtenerDatosTablaBQ(datosFirma1, true); 
         })
+        .withFailureHandler(manejarErrorServidor('Error al subir la factura'))
         .guardarDatosSolicitudFirmaFactura2(formulario);   
         break;
       case 'firmarFactura':
@@ -496,7 +498,7 @@ function comprobarFotosAlbaranes(dato1, dato2, dato3) {
         mostrarOcultarLoaderGeneral('cargaEnvioGeneral','textoCargaGeneral',"",'carga','ocultarImportant')
         cerrarModal("modalGeneral")
             generarAviso('¡Factura firmada!','success',false,false,'Se ha enviado un correo al solicitante con toda la informacion facilitada: '+value+'.\n')
-        }).firmaFactura(formulario);   
+        }).withFailureHandler(manejarErrorServidor('Error al firmar la factura')).firmaFactura(formulario);   
         break;
       case 'adjuntarAlbaranes':
         google.script.run

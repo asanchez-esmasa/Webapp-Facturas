@@ -31,6 +31,8 @@ There is no build, lint or test tooling. Code only runs inside Apps Script:
 - Legacy Google Sheets (`idLibroFacturas`, sheets `Facturas` / `Facturas Enviadas a SAGE`, `Expedientes_pedidos`) are still referenced in places.
 - Constants are duplicated: server in `000VARIABLES.gs`, client in `Variables.html`. Keep them in sync.
 
+**BigQuery writes.** Use `esperarJobBQ_(projectId, jobId)` to wait for a job (it throws on `errorResult`) and `literalCadenaBQ_(valor)` for any value interpolated into SQL (or query parameters, as in `ejecutarQueryBQConLogs`). Write helpers throw on failure. Every `google.script.run` call that writes must have `.withFailureHandler(manejarErrorServidor('…'))` (`0GLOBALJS.html`), or the loader hangs on error.
+
 **Invoice lifecycle** (`00FACTURAS.gs`, class `Factura`): states `Pendiente de revisión` → `Firmado` / `Rechazado` → contabilizada → `Pagada`. Each change goes through `actualizarDatosEnHojaManteniendoHistorialFila11*`, which updates the BigQuery row and appends to a history column. Gmail notifications are built by the `generarCuerpo*` functions.
 
 **PDF signing.** `App_PDF_Firma_ESMASA.gs` (`firmapdf`) stamps signatures onto the invoice PDF in Drive using `PDFApp.gs`, a bundled copy of the third-party library tanaikech/PDFApp. Don't edit `PDFApp.gs`.

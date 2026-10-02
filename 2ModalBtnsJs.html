@@ -370,13 +370,13 @@ function validarCIF(cif) {
         cerrarModal('modalGeneral')
         google.script.run
         .withSuccessHandler(function (value) {
-          const mensaje = ''
+          let mensaje = ''
           mensaje +="Se ha enviado un correo al proveedor: "+value.usuarioReceptor+"\n" 
           mensaje +="Recuerda ponerte  en contacto con el proveedor \n" 
           generarAviso('¡Factura rechazada !','success',false,false,mensaje)
           actualizarTablasFacturas(value)
         }).obtenerDatosTablaBQ(datosFirma1, true); 
-      }).rechazarFactura(formulario); 
+      }).withFailureHandler(manejarErrorServidor('Error al rechazar la factura')).rechazarFactura(formulario); 
     }else{
       generarAviso('¡Añade el motivo de rechazo!','error',false,false,'Para realizar la accion de rechazar debemos añadir un moptivo antes')
     }
@@ -396,7 +396,7 @@ function validarCIF(cif) {
         mostrarOcultarLoaderGeneral('cargaEnvioGeneral','textoCargaGeneral',"",'carga','ocultarImportant')
         cerrarModal('modalGeneral')
         generarAviso('¡Contabilizado a mano!','success',false,false,mensaje)
-      }).contabulizarManoGs(formulario);  
+      }).withFailureHandler(manejarErrorServidor('Error al contabilizar a mano')).contabulizarManoGs(formulario);  
     }
   } 
 function validarFormularioFirmadosNoVacio() {
@@ -472,7 +472,7 @@ function validarFormularioFirmadosNoVacio() {
         mostrarOcultarLoaderGeneral('cargaEnvioGeneral','textoCargaGeneral',"",'carga','ocultarImportant')
         actualizarDatosAlbaranes(datos)
         generarComponeneteDataListAlbaran(conjuntoAlbaranesString);
-      }).adjuntarAlbaranesAlaFacturaGs(formulario);
+      }).withFailureHandler(manejarErrorServidor('Error al adjuntar los albaranes')).adjuntarAlbaranesAlaFacturaGs(formulario);
     } else {
       mostrarOcultarLoaderGeneral('cargaEnvioGeneral','textoCargaGeneral',"",'carga','ocultarImportant')
       // El valor está vacío, puedes mostrar un mensaje de error o realizar alguna acción en consecuencia
@@ -607,7 +607,7 @@ function validarFormularioFirmadosNoVacio() {
       .withSuccessHandler(function (value) {
         actualizarTablasFacturas(value)
       }).obtenerDatosTablaBQ(datosFirma1, true); 
-    }).firmaFactura(formulario);  
+    }).withFailureHandler(manejarErrorServidor('Error al firmar la factura')).firmaFactura(formulario);  
   }
 
 </script>

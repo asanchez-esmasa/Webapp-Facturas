@@ -2,6 +2,10 @@ function generateUniqueId() {
   return '_' + Math.random().toString(36).substr(2, 9);
 }
 function adjuntarAlbaranesFacturas(formulario) {
+  // Desactivada: escribía los enlaces en la columna Datos_proveedor y borraba el CIF/razón social
+  // del proveedor. Ningún botón la usa (los albaranes se adjuntan con adjuntarAlbaranesAlaFacturaGs).
+  // Si se recupera, hay que decidir antes en qué columna deben guardarse los enlaces.
+  throw new Error("adjuntarAlbaranesFacturas está desactivada: sobrescribía Datos_proveedor.");
   var arrayLinks;
 
   if (formulario.idArchivoFormulario.includes(',')) {
@@ -358,25 +362,49 @@ function guardarDatoTabla(projectId, datasetId, tableId, objetoDatos) {
 
     console.log("🕒 Enviando job a BigQuery...");
     const job = BigQuery.Jobs.insert(jobConfig, projectId, blob);
-
-    let status;
-    do {
-      Utilities.sleep(500);
-      status = BigQuery.Jobs.get(projectId, job.jobReference.jobId);
-    } while (status.status.state === "RUNNING");
-
-    if (status.status.errorResult) {
-      console.error("❌ Error detectado en BigQuery:");
-      console.error(JSON.stringify(status.status.errors, null, 2));
-      throw new Error("Error en la inserción: " + JSON.stringify(status.status.errors));
-    }
+    esperarJobBQ_(projectId, job.jobReference.jobId);
 
     console.log("✅ Registro insertado correctamente en BigQuery.");
 
   } catch (err) {
     console.error("❌ Error en guardarDatoTablaBQ:");
     console.error(err);
+    // Se relanza para que quien llama no dé por guardado un registro que no existe
+    throw err;
   }
+}
+
+/**
+ * Espera a que termine un job de BigQuery (PENDING/RUNNING → DONE)
+ * y lanza un error si el job ha fallado.
+ */
+function esperarJobBQ_(projectId, jobId) {
+  let estado;
+  do {
+    Utilities.sleep(300);
+    estado = BigQuery.Jobs.get(projectId, jobId);
+  } while (estado.status.state !== "DONE");
+
+  if (estado.status.errorResult) {
+    const detalle = JSON.stringify(estado.status.errors || estado.status.errorResult);
+    console.error("❌ Error en el job de BigQuery " + jobId + ": " + detalle);
+    throw new Error("Error en BigQuery: " + detalle);
+  }
+  return estado;
+}
+
+/**
+ * Convierte un valor en un literal de cadena de BigQuery,
+ * escapando barras, comillas, saltos de línea y tabuladores.
+ */
+function literalCadenaBQ_(valor) {
+  const texto = String(valor)
+    .replace(/\\/g, "\\\\")
+    .replace(/"/g, '\\"')
+    .replace(/\r/g, "\\r")
+    .replace(/\n/g, "\\n")
+    .replace(/\t/g, "\\t");
+  return `"${texto}"`;
 }
 function toBigQueryDateTime(date) {
   if (!date) return null;
@@ -454,13 +482,13 @@ function actualizarDatosEnHoja(projectId, datasetId, tableId, nExpediente, nombr
     const val = columnasValores[i];
     // Forzar conversión a string JSON en caso de que sea un array u objeto
     const safeVal = typeof val === 'object' ? JSON.stringify(val) : String(val);
-    return `${col} = '${safeVal.replace(/'/g, "\\'")}'`;
+    return `${col} = ${literalCadenaBQ_(safeVal)}`;
   }).join(', ');
 
   const query = `
     UPDATE \`${projectId}.${datasetId}.${tableId}\`
     SET ${setClauses}
-    WHERE ${nombreColumnaClave} = '${nExpediente}'
+    WHERE ${nombreColumnaClave} = ${literalCadenaBQ_(nExpediente)}
   `;
 
   const request = {
@@ -470,6 +498,9 @@ function actualizarDatosEnHoja(projectId, datasetId, tableId, nExpediente, nombr
 
   const job = BigQuery.Jobs.query(request, projectId);
   const result = job.jobReference.jobId;
+  if (!job.jobComplete) {
+    esperarJobBQ_(projectId, result);
+  }
 
   Logger.log("✅ Actualización completada en BigQuery. Job ID: " + result);
   Logger.log("🧩 Query ejecutada:\n" + query);
@@ -582,7 +613,7 @@ function actualizarDatosEnHojaManteniendoHistorialFila11(projectId, datasetId, t
     const querySelect = `
       SELECT ${columnaHistorial}
       FROM \`${table}\`
-      WHERE ${columnaClave} = "${idFacturaInterno}"
+      WHERE ${columnaClave} = ${literalCadenaBQ_(idFacturaInterno)}
       LIMIT 1
     `;
 
@@ -594,12 +625,7 @@ function actualizarDatosEnHojaManteniendoHistorialFila11(projectId, datasetId, t
     );
 
     let jobIdSelect = jobSelect.jobReference.jobId;
-    let finishedSelect;
-
-    do {
-      finishedSelect = BigQuery.Jobs.get(projectId, jobIdSelect);
-      Utilities.sleep(300);
-    } while (finishedSelect.status.state !== "DONE");
+    esperarJobBQ_(projectId, jobIdSelect);
 
     const results = BigQuery.Jobs.getQueryResults(projectId, jobIdSelect);
     const rows = results.rows;
@@ -624,15 +650,15 @@ function actualizarDatosEnHojaManteniendoHistorialFila11(projectId, datasetId, t
       if (v === null || v === undefined) return "NULL";
 
       if (v instanceof Error) {
-        return `"${v.toString().replace(/"/g, '\\"')}"`;
+        return literalCadenaBQ_(v.toString());
       }
 
       if (typeof v === "object") {
-        return `"${JSON.stringify(v).replace(/"/g, '\\"')}"`;
+        return literalCadenaBQ_(JSON.stringify(v));
       }
 
       if (typeof v === "string") {
-        return `"${v.replace(/"/g, '\\"').replace(/\n/g, " ")}"`;
+        return literalCadenaBQ_(v);
       }
 
       return `${v}`;
@@ -641,7 +667,7 @@ function actualizarDatosEnHojaManteniendoHistorialFila11(projectId, datasetId, t
     const updates = Object.entries(columnasValores)
       .map(([col, val]) => {
         if (col === columnaHistorial) {
-          return `${col} = "${historialConcatenado.replace(/"/g, '\\"')}"`;
+          return `${col} = ${literalCadenaBQ_(historialConcatenado)}`;
         }
         return `${col} = ${sanitize(val)}`;
       }).join(", ");
@@ -650,7 +676,7 @@ function actualizarDatosEnHojaManteniendoHistorialFila11(projectId, datasetId, t
     const queryUpdate = `
       UPDATE \`${table}\`
       SET ${updates}
-      WHERE ${columnaClave} = "${idFacturaInterno}"
+      WHERE ${columnaClave} = ${literalCadenaBQ_(idFacturaInterno)}
     `;
 
     console.log("🟦 Query UPDATE final:", queryUpdate);
@@ -664,19 +690,15 @@ function actualizarDatosEnHojaManteniendoHistorialFila11(projectId, datasetId, t
     );
 
     const jobIdUpdate = jobUpdate.jobReference.jobId;
-    let finishedUpdate;
-
-    do {
-      finishedUpdate = BigQuery.Jobs.get(projectId, jobIdUpdate);
-      Utilities.sleep(300);
-    } while (finishedUpdate.status.state !== "DONE");
+    esperarJobBQ_(projectId, jobIdUpdate);
 
     console.log("✅ Actualización completada correctamente.");
     return true;
 
   } catch (err) {
     console.error("❌ Error al actualizar datos en BigQuery:", err);
-    return false;
+    // Se relanza para que no se envíen correos ni se muestre éxito si el UPDATE ha fallado
+    throw err;
   }
 }
 
@@ -1013,20 +1035,11 @@ function ejecutarQueryBQConLogs(projectId, query, params) {
     const job = BigQuery.Jobs.insert(request, projectId);
     const jobId = job.jobReference.jobId;
 
-    // Espera activa
-    let jobStatus;
-    do {
-      Utilities.sleep(1000);
-      jobStatus = BigQuery.Jobs.get(projectId, jobId);
-    } while (!jobStatus.status.state || jobStatus.status.state !== "DONE");
-
-    if (jobStatus.status.errorResult) {
-      console.error("❌ Error en BigQuery:", jobStatus.status.errorResult.message);
-    } else {
-      console.log("✅ Job completado correctamente:", jobId);
-    }
+    esperarJobBQ_(projectId, jobId);
+    console.log("✅ Job completado correctamente:", jobId);
   } catch (err) {
     console.error("🚨 Error al ejecutar consulta BQ:", err.message);
+    throw err;
   }
 }
 
